@@ -4,6 +4,7 @@
 //! optimized for gas efficiency and easy parsing by indexers.
 
 use soroban_sdk::{
+    contracttype, Address, BytesN, Env, Symbol, Vec,
     Address, BytesN, Env, String, Symbol, Vec,
 };
 
@@ -442,40 +443,6 @@ impl<'a> EventPublisher<'a> {
         );
     }
 
-    /// Publish a batch minted event.
-    pub fn publish_batch_minted(&self, token_ids: Vec<u128>, course_id: BytesN<32>, count: u32, minted_by: &Address) {
-        let event = CertificateBatchMintedEvent {
-            token_ids: token_ids.clone(),
-            course_id,
-            count,
-            minted_at: self.env.ledger().timestamp(),
-            minted_by: minted_by.clone(),
-        };
-        self.env.events().publish(
-            (
-                Symbol::new(self.env, "batch_minted"),
-                Symbol::new(self.env, "v2"),
-            ),
-            (token_ids, course_id, count, event.minted_at, minted_by.clone()),
-        );
-    }
-
-    /// Publish a certificate renewed event.
-    pub fn publish_renewed(&self, token_id: u128, renewed_by: &Address, new_expiry: u64) {
-        let event = CertificateRenewedEvent {
-            token_id,
-            renewed_by: renewed_by.clone(),
-            renewed_at: self.env.ledger().timestamp(),
-            new_expiry,
-        };
-        self.env.events().publish(
-            (
-                Symbol::new(self.env, "cert_renewed"),
-                Symbol::new(self.env, "v2"),
-            ),
-            (token_id, renewed_by.clone(), event.renewed_at, new_expiry),
-        );
-    }
 }
 
 /// Event recorder that emits v2 events for the contract.
@@ -489,7 +456,7 @@ impl<'a> EventRecorder<'a> {
     pub fn new(env: &'a Env, contract_address: Address) -> Self {
         Self {
             env,
-            contract_address,
+            contract_address: contract_address.clone(),
             publisher: EventPublisher::new(env, contract_address),
         }
     }
@@ -540,15 +507,16 @@ pub fn compute_metadata_hash(
     grade: &Option<String>,
     did: &Option<String>,
 ) -> BytesN<32> {
+    let mut buffer = Bytes::new(env);
     let mut hasher = env.crypto().hasher();
 
-    hasher.update(course_name.as_bytes());
+    buffer.append(&course_name.to_xdr(env));
     if let Some(grade) = grade {
-        hasher.update(grade.as_bytes());
+        buffer.append(&grade.to_xdr(env));
     }
     if let Some(did) = did {
-        hasher.update(did.as_bytes());
+        buffer.append(&did.to_xdr(env));
     }
 
-    hasher.finalize()
+    env.crypto().sha256(&buffer)
 }

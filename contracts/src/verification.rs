@@ -84,7 +84,7 @@ impl VerificationResult {
     pub fn superseded(
         owner: Address,
         metadata: CertificateMetadata,
-        superseded_by: u128,
+        _superseded_by: u128,
         verification_timestamp: u64,
     ) -> Self {
         Self {
@@ -101,7 +101,7 @@ impl VerificationResult {
     pub fn reissued(
         owner: Address,
         metadata: CertificateMetadata,
-        new_token_id: u128,
+        _new_token_id: u128,
         verification_timestamp: u64,
     ) -> Self {
         Self {

@@ -43,6 +43,8 @@ pub mod quadratic_voting;
 // #[cfg(test)]
 // pub mod fuzz;
 pub mod token;
+pub mod airdrop_manager;
+pub mod merkle_distributor;
 pub mod crowdfunding;
 pub mod milestone_release;
 
@@ -548,11 +550,11 @@ impl CertificateContract {
 
         // Record activity
         let activity_mgr = ActivityLogManager::new(&env);
-        let env_ref = &env;
-        let hash_input = format!("{}:{}:{}", caller.to_xdr(env_ref).to_vec(), account.to_xdr(env_ref).to_vec(), role as u32);
-        let mut hasher = env.crypto().hasher();
-        hasher.update(hash_input.as_bytes());
-        let data_hash = hasher.finalize();
+        let mut buffer = Bytes::new(&env);
+        buffer.append(&caller.to_xdr(&env));
+        buffer.append(&account.to_xdr(&env));
+        buffer.append(&(role as u32).to_xdr(&env));
+        let data_hash = env.crypto().sha256(&buffer);
         activity_mgr.record(
             LogEventType::RoleGranted,
             None,
@@ -589,9 +591,9 @@ impl CertificateContract {
         // Activity log
         let activity_mgr = ActivityLogManager::new(&env);
         let env_ref = &env;
-        let hash_input = format!("{}:{}", caller.to_xdr(env_ref).to_vec(), account.to_xdr(env_ref).to_vec());
+        let mut buffer = Bytes::new(&env);
         let mut hasher = env.crypto().hasher();
-        hasher.update(hash_input.as_bytes());
+        buffer.append(&caller.to_xdr(&env)); let data_hash = env.crypto().sha256(&buffer);
         let data_hash = hasher.finalize();
         activity_mgr.record(
             LogEventType::RoleRevoked,
@@ -626,11 +628,10 @@ impl CertificateContract {
 
         // Activity log
         let activity_mgr = ActivityLogManager::new(&env);
-        let env_ref = &env;
-        let hash_input = format!("{}:{}", caller.to_xdr(env_ref).to_vec(), paused);
-        let mut hasher = env.crypto().hasher();
-        hasher.update(hash_input.as_bytes());
-        let data_hash = hasher.finalize();
+        let mut buffer = Bytes::new(&env);
+        buffer.append(&caller.to_xdr(&env));
+        buffer.append(&paused.to_xdr(&env));
+        let data_hash = env.crypto().sha256(&buffer);
         activity_mgr.record(
             LogEventType::PauseUpdated,
             None,
@@ -683,11 +684,10 @@ impl CertificateContract {
 
         // Activity log
         let activity_mgr = ActivityLogManager::new(&env);
-        let env_ref = &env;
-        let hash_input = format!("{}:{}", caller.to_xdr(env_ref).to_vec(), id);
-        let mut hasher = env.crypto().hasher();
-        hasher.update(hash_input.as_bytes());
-        let data_hash = hasher.finalize();
+        let mut buffer = Bytes::new(&env);
+        buffer.append(&caller.to_xdr(&env));
+        buffer.append(&id.to_xdr(&env));
+        let data_hash = env.crypto().sha256(&buffer);
         activity_mgr.record(
             LogEventType::ActionProposed,
             None,
@@ -739,11 +739,10 @@ impl CertificateContract {
 
             // Activity log
             let activity_mgr = ActivityLogManager::new(&env);
-            let env_ref = &env;
-            let hash_input = format!("{}:{}", caller.to_xdr(env_ref).to_vec(), proposal_id);
-            let mut hasher = env.crypto().hasher();
-            hasher.update(hash_input.as_bytes());
-            let data_hash = hasher.finalize();
+            let mut buffer = Bytes::new(&env);
+            buffer.append(&caller.to_xdr(&env));
+            buffer.append(&proposal_id.to_xdr(&env));
+            let data_hash = env.crypto().sha256(&buffer);
             activity_mgr.record(
                 LogEventType::ActionApproved,
                 None,
@@ -778,11 +777,10 @@ impl CertificateContract {
 
         // Activity log
         let activity_mgr = ActivityLogManager::new(&env);
-        let env_ref = &env;
-        let hash_input = format!("{}:{}", signer_a.to_xdr(env_ref).to_vec(), signer_b.to_xdr(env_ref).to_vec());
-        let mut hasher = env.crypto().hasher();
-        hasher.update(hash_input.as_bytes());
-        let data_hash = hasher.finalize();
+        let mut buffer = Bytes::new(&env);
+        buffer.append(&signer_a.to_xdr(&env));
+        buffer.append(&signer_b.to_xdr(&env));
+        let data_hash = env.crypto().sha256(&buffer);
         activity_mgr.record(
             LogEventType::UpgradeExecuted,
             None,
@@ -827,9 +825,9 @@ impl CertificateContract {
         // Activity log
         let activity_mgr = ActivityLogManager::new(&env);
         let env_ref = &env;
-        let hash_input = format!("{}", caller.to_xdr(env_ref).to_vec().len());
+        let mut buffer = Bytes::new(&env);
         let mut hasher = env.crypto().hasher();
-        hasher.update(hash_input.as_bytes());
+        buffer.append(&caller.to_xdr(&env)); let data_hash = env.crypto().sha256(&buffer);
         let data_hash = hasher.finalize();
         activity_mgr.record(
             LogEventType::UpgradeProposed,
@@ -876,9 +874,9 @@ impl CertificateContract {
         // Activity log
         let activity_mgr = ActivityLogManager::new(&env);
         let env_ref = &env;
-        let hash_input = format!("{}:{}", caller.to_xdr(env_ref).to_vec(), pending.approval_mask);
+        let mut buffer = Bytes::new(&env);
         let mut hasher = env.crypto().hasher();
-        hasher.update(hash_input.as_bytes());
+        buffer.append(&caller.to_xdr(&env)); let data_hash = env.crypto().sha256(&buffer);
         let data_hash = hasher.finalize();
         activity_mgr.record(
             LogEventType::UpgradeApproved,
@@ -922,9 +920,9 @@ impl CertificateContract {
         // Activity log
         let activity_mgr = ActivityLogManager::new(&env);
         let env_ref = &env;
-        let hash_input = format!("{}", pending.new_wasm_hash.to_xdr(env_ref).to_vec().len());
+        let mut buffer = Bytes::new(&env);
         let mut hasher = env.crypto().hasher();
-        hasher.update(hash_input.as_bytes());
+        buffer.append(&caller.to_xdr(&env)); let data_hash = env.crypto().sha256(&buffer);
         let data_hash = hasher.finalize();
         activity_mgr.record(
             LogEventType::UpgradeExecuted,
@@ -952,9 +950,9 @@ impl CertificateContract {
         // Activity log
         let activity_mgr = ActivityLogManager::new(&env);
         let env_ref = &env;
-        let hash_input = format!("{}", caller.to_xdr(env_ref).to_vec().len());
+        let mut buffer = Bytes::new(&env);
         let mut hasher = env.crypto().hasher();
-        hasher.update(hash_input.as_bytes());
+        buffer.append(&caller.to_xdr(&env)); let data_hash = env.crypto().sha256(&buffer);
         let data_hash = hasher.finalize();
         activity_mgr.record(
             LogEventType::UpgradeCancelled,
@@ -1015,9 +1013,9 @@ impl CertificateContract {
         // Activity log
         let activity_mgr = ActivityLogManager::new(&env);
         let env_ref = &env;
-        let hash_input = format!("{}:{}:{}", signer_a.to_xdr(env_ref).to_vec(), signer_b.to_xdr(env_ref).to_vec(), target_version);
+        let mut buffer = Bytes::new(&env);
         let mut hasher = env.crypto().hasher();
-        hasher.update(hash_input.as_bytes());
+        buffer.append(&caller.to_xdr(&env)); let data_hash = env.crypto().sha256(&buffer);
         let data_hash = hasher.finalize();
         activity_mgr.record(
             LogEventType::EmergencyRollback,
@@ -1048,9 +1046,9 @@ impl CertificateContract {
         // Activity log
         let activity_mgr = ActivityLogManager::new(&env);
         let env_ref = &env;
-        let hash_input = format!("{}:{}", caller.to_xdr(env_ref).to_vec(), new_admin.to_xdr(env_ref).to_vec());
+        let mut buffer = Bytes::new(&env);
         let mut hasher = env.crypto().hasher();
-        hasher.update(hash_input.as_bytes());
+        buffer.append(&caller.to_xdr(&env)); let data_hash = env.crypto().sha256(&buffer);
         let data_hash = hasher.finalize();
         activity_mgr.record(
             LogEventType::AdminAdded,
@@ -1080,9 +1078,9 @@ impl CertificateContract {
         // Activity log
         let activity_mgr = ActivityLogManager::new(&env);
         let env_ref = &env;
-        let hash_input = format!("{}", admin_to_remove.to_xdr(env_ref).to_vec().len());
+        let mut buffer = Bytes::new(&env);
         let mut hasher = env.crypto().hasher();
-        hasher.update(hash_input.as_bytes());
+        buffer.append(&caller.to_xdr(&env)); let data_hash = env.crypto().sha256(&buffer);
         let data_hash = hasher.finalize();
         activity_mgr.record(
             LogEventType::AdminRemoved,
@@ -1122,9 +1120,9 @@ impl CertificateContract {
         // Activity log
         let activity_mgr = ActivityLogManager::new(&env);
         let env_ref = &env;
-        let hash_input = format!("{}:{}", caller.to_xdr(env_ref).to_vec(), new_owner.to_xdr(env_ref).to_vec());
+        let mut buffer = Bytes::new(&env);
         let mut hasher = env.crypto().hasher();
-        hasher.update(hash_input.as_bytes());
+        buffer.append(&caller.to_xdr(&env)); let data_hash = env.crypto().sha256(&buffer);
         let data_hash = hasher.finalize();
         activity_mgr.record(
             LogEventType::OwnershipTransferred,
@@ -1161,9 +1159,9 @@ impl CertificateContract {
                 let activity_mgr = ActivityLogManager::new(&env);
                 let caller = env.caller();
                 let env_ref = &env;
-                let hash_input = format!("{}:{}", old_cap, new_cap);
+                let mut buffer = Bytes::new(&env);
                 let mut hasher = env.crypto().hasher();
-                hasher.update(hash_input.as_bytes());
+                buffer.append(&caller.to_xdr(&env)); let data_hash = env.crypto().sha256(&buffer);
                 let data_hash = hasher.finalize();
                 activity_mgr.record(
                     LogEventType::MintCapUpdated,
@@ -1598,9 +1596,9 @@ impl CertificateContract {
         // Activity log - address = student (affected party)
         let activity_mgr = ActivityLogManager::new(&env);
         let env_ref = &env;
-        let hash_input = format!("{}:{}:0", token_id, caller.to_xdr(env_ref).to_vec());
+        let mut buffer = Bytes::new(&env);
         let mut hasher = env.crypto().hasher();
-        hasher.update(hash_input.as_bytes());
+        buffer.append(&caller.to_xdr(&env)); let data_hash = env.crypto().sha256(&buffer);
         let data_hash = hasher.finalize();
         activity_mgr.record(
             LogEventType::Revoked,
@@ -1688,9 +1686,9 @@ impl CertificateContract {
         // Activity log - use student as address (affected party)
         let activity_mgr = ActivityLogManager::new(&env);
         let env_ref = &env;
-        let hash_input = format!("{}:{}:{}", token_id, caller.to_xdr(env_ref).to_vec(), new_expiry);
+        let mut buffer = Bytes::new(&env);
         let mut hasher = env.crypto().hasher();
-        hasher.update(hash_input.as_bytes());
+        buffer.append(&caller.to_xdr(&env)); let data_hash = env.crypto().sha256(&buffer);
         let data_hash = hasher.finalize();
         activity_mgr.record(
             LogEventType::Renewed,
@@ -1870,9 +1868,9 @@ impl CertificateContract {
         // Activity log
         let activity_mgr = ActivityLogManager::new(&env);
         let env_ref = &env;
-        let hash_input = format!("{}:{}", caller.to_xdr(env_ref).to_vec(), did);
+        let mut buffer = Bytes::new(&env);
         let mut hasher = env.crypto().hasher();
-        hasher.update(hash_input.as_bytes());
+        buffer.append(&caller.to_xdr(&env)); let data_hash = env.crypto().sha256(&buffer);
         let data_hash = hasher.finalize();
         activity_mgr.record(
             LogEventType::DidUpdated,
@@ -1913,9 +1911,9 @@ impl CertificateContract {
         // Activity log - address = student (affected)
         let activity_mgr = ActivityLogManager::new(&env);
         let env_ref = &env;
-        let hash_input = format!("{}", student.to_xdr(env_ref).to_vec().len());
+        let mut buffer = Bytes::new(&env);
         let mut hasher = env.crypto().hasher();
-        hasher.update(hash_input.as_bytes());
+        buffer.append(&caller.to_xdr(&env)); let data_hash = env.crypto().sha256(&buffer);
         let data_hash = hasher.finalize();
         activity_mgr.record(
             LogEventType::DidRemoved,
@@ -2466,15 +2464,16 @@ fn compute_metadata_hash(
     grade: &Option<String>,
     did: &Option<String>,
 ) -> BytesN<32> {
+    let mut buffer = Bytes::new(env);
+    buffer.append(&course_name.to_xdr(env));
     let mut hasher = env.crypto().hasher();
 
     hasher.update(course_name.as_bytes());
     if let Some(grade) = grade {
-        hasher.update(grade.as_bytes());
+        buffer.append(&grade.to_xdr(env));
     }
     if let Some(did) = did {
-        hasher.update(did.as_bytes());
+        buffer.append(&did.to_xdr(env));
     }
-
-    hasher.finalize()
+    env.crypto().sha256(&buffer)
 }

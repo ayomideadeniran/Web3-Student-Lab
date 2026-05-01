@@ -204,6 +204,11 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground selection:bg-red-600 selection:text-white pb-20 relative overflow-hidden transition-colors duration-200">
+      {/* Abstract Background Glow */}
+      <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-red-600/5 rounded-full blur-[150px] pointer-events-none"></div>
+      <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-red-600/5 rounded-full blur-[120px] pointer-events-none"></div>
+
+      {/* Navigation Layer */}
       {/* Background glows */}
       <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-red-600/5 rounded-full blur-[150px] pointer-events-none"></div>
       <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-red-600/5 rounded-full blur-[120px] pointer-events-none"></div>
@@ -503,18 +508,17 @@ export default function DashboardPage() {
                   →
                 </span>
               </Link>
-            </div>
-            </div>
-            <WithSkeleton
-              isLoading={isLoading}
-              skeleton={
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  <CertCardSkeleton />
-                  <CertCardSkeleton />
-                  <CertCardSkeleton />
-                </div>
-              }
-            >
+          </div>
+          <WithSkeleton
+            isLoading={isLoading}
+            skeleton={
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <CertCardSkeleton />
+                <CertCardSkeleton />
+                <CertCardSkeleton />
+              </div>
+            }
+          >
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {certificates.slice(0, 3).map((cert, index) => (
                 <Link
@@ -558,9 +562,9 @@ export default function DashboardPage() {
                 </Link>
               ))}
             </div>
-            </WithSkeleton>
-          </div>
-        )}
+          </WithSkeleton>
+        </div>
+      )}
 
         {/* Audit Logs Section */}
         <div className="mt-20 [content-visibility:auto] [contain-intrinsic-size:1px_500px]">

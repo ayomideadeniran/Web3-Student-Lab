@@ -20,6 +20,16 @@ export default function Navbar() {
   const isActive = (path: string) => pathname === path || pathname.startsWith(path + "/");
 
   const navLinks = [
+    { name: "MODULES", path: "/courses" },
+    { name: "ROADMAP", path: "/roadmap" },
+    { name: "QUIZ", path: "/quiz" },
+    { name: "PLAYGROUND", path: "/playground" },
+    { name: "REVIEWS", path: "/peer-review" },
+    { name: "SIMULATOR", path: "/simulator" },
+    { name: "IDEAS", path: "/ideas" },
+    { name: "VERIFY", path: "/verify" },
+    { name: "AIRDROP", path: "/airdrop" },
+    { name: "DEVTOOLS", path: "/devtools/events" },
     { name: t("nav.modules"), path: "/courses" },
     { name: t("nav.roadmap"), path: "/roadmap" },
     { name: t("nav.quiz"), path: "/quiz" },
