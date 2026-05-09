@@ -184,7 +184,9 @@ pub fn get_distribution_count(env: &Env) -> u64 {
 }
 
 pub fn get_change(env: &Env, index: u64) -> Option<ChangeRecord> {
-    env.storage().persistent().get(&DistKey::ChangeRecord(index))
+    env.storage()
+        .persistent()
+        .get(&DistKey::ChangeRecord(index))
 }
 
 pub fn get_change_count(env: &Env) -> u64 {

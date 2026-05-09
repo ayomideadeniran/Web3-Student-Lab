@@ -128,7 +128,11 @@ impl DexAggregatorContract {
         caller.require_auth();
         Self::assert_admin(&env, &caller);
 
-        let count: u32 = env.storage().instance().get(&AggKey::PoolCount).unwrap_or(0);
+        let count: u32 = env
+            .storage()
+            .instance()
+            .get(&AggKey::PoolCount)
+            .unwrap_or(0);
         if count >= MAX_POOLS {
             panic_with_error!(&env, AggError::TooManyPools);
         }
@@ -144,12 +148,12 @@ impl DexAggregatorContract {
             active: true,
         };
         env.storage().instance().set(&AggKey::Pool(count), &pool);
-        env.storage().instance().set(&AggKey::PoolCount, &(count + 1));
+        env.storage()
+            .instance()
+            .set(&AggKey::PoolCount, &(count + 1));
 
-        env.events().publish(
-            (symbol_short!("agg"), symbol_short!("pool_add")),
-            count,
-        );
+        env.events()
+            .publish((symbol_short!("agg"), symbol_short!("pool_add")), count);
         count
     }
 
@@ -252,7 +256,11 @@ impl DexAggregatorContract {
         }
 
         // Update reserves for pools that received allocation
-        let pool_count: u32 = env.storage().instance().get(&AggKey::PoolCount).unwrap_or(0);
+        let pool_count: u32 = env
+            .storage()
+            .instance()
+            .get(&AggKey::PoolCount)
+            .unwrap_or(0);
         let mut snap_idx = 0usize;
         for pid in 0..pool_count {
             if let Some(mut pool) = env
@@ -318,11 +326,17 @@ impl DexAggregatorContract {
     }
 
     pub fn get_pool_count(env: Env) -> u32 {
-        env.storage().instance().get(&AggKey::PoolCount).unwrap_or(0)
+        env.storage()
+            .instance()
+            .get(&AggKey::PoolCount)
+            .unwrap_or(0)
     }
 
     pub fn get_nonce(env: Env, user: Address) -> u64 {
-        env.storage().instance().get(&AggKey::Nonce(user)).unwrap_or(0)
+        env.storage()
+            .instance()
+            .get(&AggKey::Nonce(user))
+            .unwrap_or(0)
     }
 
     // -----------------------------------------------------------------------
@@ -341,7 +355,11 @@ impl DexAggregatorContract {
     }
 
     fn assert_not_paused(env: &Env) {
-        let paused: bool = env.storage().instance().get(&AggKey::Paused).unwrap_or(false);
+        let paused: bool = env
+            .storage()
+            .instance()
+            .get(&AggKey::Paused)
+            .unwrap_or(false);
         if paused {
             panic_with_error!(env, AggError::Paused);
         }
@@ -354,7 +372,11 @@ impl DexAggregatorContract {
         token_in: &Address,
         token_out: &Address,
     ) -> ([PoolSnapshot; 8], usize) {
-        let pool_count: u32 = env.storage().instance().get(&AggKey::PoolCount).unwrap_or(0);
+        let pool_count: u32 = env
+            .storage()
+            .instance()
+            .get(&AggKey::PoolCount)
+            .unwrap_or(0);
         let mut snaps: [PoolSnapshot; 8] = core::array::from_fn(|_| PoolSnapshot {
             pool_id: 0,
             reserve_in: 0,
@@ -410,7 +432,13 @@ mod tests {
     use super::*;
     use soroban_sdk::{testutils::Address as _, Address, Env};
 
-    fn setup() -> (Env, Address, Address, Address, DexAggregatorContractClient<'static>) {
+    fn setup() -> (
+        Env,
+        Address,
+        Address,
+        Address,
+        DexAggregatorContractClient<'static>,
+    ) {
         let env = Env::default();
         env.mock_all_auths();
         let admin = Address::generate(&env);

@@ -30,10 +30,16 @@ pub enum QVKey {
 }
 
 /// Create a new quadratic voting proposal
-pub fn create_proposal(env: &Env, creator: Address, title: String, description: String, duration: u64) -> u64 {
+pub fn create_proposal(
+    env: &Env,
+    creator: Address,
+    title: String,
+    description: String,
+    duration: u64,
+) -> u64 {
     let id: u64 = env.storage().instance().get(&QVKey::NextId).unwrap_or(0);
     env.storage().instance().set(&QVKey::NextId, &(id + 1));
-    
+
     let proposal = QVProposal {
         id,
         creator,
@@ -44,8 +50,10 @@ pub fn create_proposal(env: &Env, creator: Address, title: String, description: 
         tally_support: 0,
         total_credits_spent: 0,
     };
-    
-    env.storage().persistent().set(&QVKey::Proposal(id), &proposal);
+
+    env.storage()
+        .persistent()
+        .set(&QVKey::Proposal(id), &proposal);
     id
 }
 
@@ -60,35 +68,41 @@ pub fn cast_vote(env: &Env, user: Address, proposal_id: u64, votes: i128) -> boo
         Some(p) => p,
         None => return false,
     };
-    
+
     // Check if proposal is active and not expired
     if proposal.status != ProposalStatus::Active || env.ledger().timestamp() > proposal.deadline {
         return false;
     }
-    
+
     // Sybil verification check
     if !crate::sybil_resistance::is_verified(env, &user) {
         return false; // Only verified users can vote
     }
-    
+
     // Quadratic cost calculation: cost = votes^2
     let abs_votes = if votes < 0 { -votes } else { votes };
-    let cost = (abs_votes as u128).checked_mul(abs_votes as u128).unwrap_or(u128::MAX);
-    
+    let cost = (abs_votes as u128)
+        .checked_mul(abs_votes as u128)
+        .unwrap_or(u128::MAX);
+
     // Standard QV implementation: check if user has enough credits
     if !crate::sybil_resistance::consume_credits(env, &user, cost) {
         return false;
     }
-    
+
     // Update tally and metadata
     proposal.tally_support += votes;
     proposal.total_credits_spent += cost;
-    
-    env.storage().persistent().set(&QVKey::Proposal(proposal_id), &proposal);
-    
+
+    env.storage()
+        .persistent()
+        .set(&QVKey::Proposal(proposal_id), &proposal);
+
     // Store user's vote for transparency/history
-    env.storage().persistent().set(&QVKey::UserVote(proposal_id, user), &votes);
-    
+    env.storage()
+        .persistent()
+        .set(&QVKey::UserVote(proposal_id, user), &votes);
+
     true
 }
 
@@ -98,16 +112,16 @@ pub fn execute_proposal(env: &Env, id: u64) -> bool {
         Some(p) => p,
         None => return false,
     };
-    
+
     if proposal.status != ProposalStatus::Active {
         return false;
     }
-    
+
     // Check if deadline passed
     if env.ledger().timestamp() <= proposal.deadline {
         return false;
     }
-    
+
     // Simple execution logic: if tally > 0, it passes
     if proposal.tally_support > 0 {
         proposal.status = ProposalStatus::Passed;
@@ -116,7 +130,9 @@ pub fn execute_proposal(env: &Env, id: u64) -> bool {
     } else {
         proposal.status = ProposalStatus::Failed;
     }
-    
-    env.storage().persistent().set(&QVKey::Proposal(id), &proposal);
+
+    env.storage()
+        .persistent()
+        .set(&QVKey::Proposal(id), &proposal);
     true
 }

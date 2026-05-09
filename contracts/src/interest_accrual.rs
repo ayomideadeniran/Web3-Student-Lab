@@ -1,5 +1,5 @@
-use soroban_sdk::{contracttype, Address, Env, panic_with_error};
 use crate::savings_wallet::{SavingsAccount, SavingsDataKey, SavingsError};
+use soroban_sdk::{contracttype, panic_with_error, Address, Env};
 
 const SECONDS_PER_YEAR: u64 = 31536000;
 const BASIS_POINTS: u32 = 10000;
@@ -16,10 +16,7 @@ pub struct InterestCalculation {
 pub struct InterestAccrualService;
 
 impl InterestAccrualService {
-    pub fn calculate_accrued_interest(
-        env: &Env,
-        account: &SavingsAccount,
-    ) -> InterestCalculation {
+    pub fn calculate_accrued_interest(env: &Env, account: &SavingsAccount) -> InterestCalculation {
         let current_time = env.ledger().timestamp();
         let time_elapsed = current_time.saturating_sub(account.last_interest_claim);
 
@@ -32,11 +29,8 @@ impl InterestAccrualService {
             };
         }
 
-        let interest = Self::compound_interest(
-            account.balance,
-            account.interest_rate,
-            time_elapsed,
-        );
+        let interest =
+            Self::compound_interest(account.balance, account.interest_rate, time_elapsed);
 
         InterestCalculation {
             principal: account.balance,
@@ -72,16 +66,20 @@ impl InterestAccrualService {
             .unwrap_or_else(|| panic_with_error!(env, SavingsError::AccountNotFound));
 
         let calculation = Self::calculate_accrued_interest(env, &account);
-        
+
         if calculation.interest_earned <= 0 {
             return 0;
         }
 
         account.balance = account.balance.saturating_add(calculation.interest_earned);
-        account.total_interest_earned = account.total_interest_earned.saturating_add(calculation.interest_earned);
+        account.total_interest_earned = account
+            .total_interest_earned
+            .saturating_add(calculation.interest_earned);
         account.last_interest_claim = env.ledger().timestamp();
 
-        env.storage().instance().set(&SavingsDataKey::Account(owner.clone()), &account);
+        env.storage()
+            .instance()
+            .set(&SavingsDataKey::Account(owner.clone()), &account);
 
         env.events().publish(
             (soroban_sdk::symbol_short!("int_claim"),),
@@ -102,11 +100,7 @@ impl InterestAccrualService {
         calculation.interest_earned
     }
 
-    pub fn get_projected_interest(
-        env: &Env,
-        owner: &Address,
-        future_seconds: u64,
-    ) -> i128 {
+    pub fn get_projected_interest(env: &Env, owner: &Address, future_seconds: u64) -> i128 {
         let account: SavingsAccount = env
             .storage()
             .instance()
@@ -114,7 +108,9 @@ impl InterestAccrualService {
             .unwrap_or_else(|| panic_with_error!(env, SavingsError::AccountNotFound));
 
         let current_calculation = Self::calculate_accrued_interest(env, &account);
-        let future_balance = account.balance.saturating_add(current_calculation.interest_earned);
+        let future_balance = account
+            .balance
+            .saturating_add(current_calculation.interest_earned);
 
         Self::compound_interest(future_balance, account.interest_rate, future_seconds)
     }
@@ -134,10 +130,17 @@ mod tests {
         let annual_rate = 500u32;
         let time_seconds = 31536000u64;
 
-        let interest = InterestAccrualService::compound_interest(principal, annual_rate, time_seconds);
-        
+        let interest =
+            InterestAccrualService::compound_interest(principal, annual_rate, time_seconds);
+
         assert!(interest > 0);
-        assert!(interest <= principal.saturating_mul(annual_rate as i128).checked_div(BASIS_POINTS as i128).unwrap_or(0));
+        assert!(
+            interest
+                <= principal
+                    .saturating_mul(annual_rate as i128)
+                    .checked_div(BASIS_POINTS as i128)
+                    .unwrap_or(0)
+        );
     }
 
     #[test]

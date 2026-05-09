@@ -11,66 +11,65 @@
 #![allow(clippy::all)]
 #![allow(warnings)]
 
+pub mod activity_log;
 pub mod admin;
-pub mod distribution_manager;
+pub mod crowdfunding;
 pub mod dex_aggregator;
+pub mod distribution_manager;
 pub mod enrollment;
 pub mod events;
-pub mod activity_log;
-pub mod statistics;
+pub mod execution_engine;
+pub mod gaming_asset_exchange;
 pub mod membership_nft;
-pub mod payment_gateway;
 pub mod paymaster;
+pub mod payment_gateway;
+pub mod payment_scheduler;
+pub mod quadratic_voting;
+pub mod rarity_validator;
 pub mod reputation_system;
 pub mod revocation;
-pub mod royalty_splitter;
 pub mod route_optimizer;
-pub mod scoring_algorithm;
-pub mod smart_wallet;
+pub mod royalty_splitter;
 pub mod sai_wrapper;
+pub mod scoring_algorithm;
 pub mod session;
+pub mod smart_wallet;
 pub mod staking;
+pub mod statistics;
+pub mod sybil_resistance;
+pub mod token_buyback;
 pub mod token_gated_access;
 pub mod verification;
-pub mod gaming_asset_exchange;
-pub mod rarity_validator;
-pub mod payment_scheduler;
-pub mod execution_engine;
-pub mod sybil_resistance;
-pub mod quadratic_voting;
-pub mod token_buyback;
-pub mod crowdfunding;
 // Fuzz module uses `std` and legacy Soroban test patterns; keep out of the default test build
 // until it is refreshed for the current SDK (`sequence_number`, token `mint` arity, etc.).
 // #[cfg(test)]
 // pub mod fuzz;
-pub mod token;
-pub mod upgrade;
 pub mod airdrop_manager;
 pub mod merkle_distributor;
 pub mod milestone_release;
+pub mod token;
+pub mod upgrade;
 
-pub mod savings_wallet;
-pub mod interest_accrual;
 pub mod carbon_credit_platform;
-pub mod verification_system;
-pub mod timestamping;
 pub mod file_notarization;
+pub mod interest_accrual;
+pub mod savings_wallet;
+pub mod timestamping;
+pub mod verification_system;
 
-use crate::revocation::{CertificateState, CertificateStatus, RevocationReason, RevocationRecord};
-use crate::token::RsTokenContractClient;
-use crate::verification::{CertificateMetadata, VerificationResult};
-use crate::events::EventRecorder;
 use crate::activity_log::{ActivityLogManager, EventType as LogEventType};
+use crate::admin::{AdminPolicy, AdminRole, Permission};
+use crate::events::EventRecorder;
+use crate::revocation::{CertificateState, CertificateStatus, RevocationReason, RevocationRecord};
 use crate::statistics::StatisticsManager;
+use crate::token::RsTokenContractClient;
 use crate::upgrade::{ContractVersion, PendingUpgrade};
-use crate::admin::{AdminRole, AdminPolicy, Permission};
+use crate::verification::{CertificateMetadata, VerificationResult};
 use soroban_sdk::xdr::ToXdr;
 use soroban_sdk::{
     contract, contracterror, contractimpl, contracttype, panic_with_error, Address, Bytes, BytesN,
     Env, String, Symbol, Vec,
 };
-
 
 /// Issued certificate record.
 #[contracttype]
@@ -541,7 +540,9 @@ impl CertificateContract {
 
         // Emit v2 event
         let recorder = EventRecorder::new(&env, env.current_contract_address());
-        recorder.publisher.publish_role_granted(&caller, &account, role as u32);
+        recorder
+            .publisher
+            .publish_role_granted(&caller, &account, role as u32);
 
         // Record activity
         let activity_mgr = ActivityLogManager::new(&env);
@@ -550,12 +551,7 @@ impl CertificateContract {
         buffer.append(&account.clone().to_xdr(&env));
         buffer.append(&(role as u32).to_xdr(&env));
         let data_hash: BytesN<32> = env.crypto().sha256(&buffer).into();
-        activity_mgr.record(
-            LogEventType::RoleGranted,
-            None,
-            &account,
-            data_hash,
-        );
+        activity_mgr.record(LogEventType::RoleGranted, None, &account, data_hash);
     }
 
     /// Revoke the stored role for `account` (removes Instructor/Student assignment).
@@ -576,8 +572,10 @@ impl CertificateContract {
             .remove(&DataKey::Role(account.clone()));
 
         // Emit v1 event
-        env.events()
-            .publish((Symbol::new(&env, "v1_role_revoked"),), (caller.clone(), account.clone()));
+        env.events().publish(
+            (Symbol::new(&env, "v1_role_revoked"),),
+            (caller.clone(), account.clone()),
+        );
 
         // Emit v2 event
         let recorder = EventRecorder::new(&env, env.current_contract_address());
@@ -587,13 +585,9 @@ impl CertificateContract {
         let activity_mgr = ActivityLogManager::new(&env);
         let env_ref = &env;
         let mut buffer = Bytes::new(&env);
-        buffer.append(&caller.clone().to_xdr(&env)); let data_hash: BytesN<32> = env.crypto().sha256(&buffer).into();
-        activity_mgr.record(
-            LogEventType::RoleRevoked,
-            None,
-            &account,
-            data_hash,
-        );
+        buffer.append(&caller.clone().to_xdr(&env));
+        let data_hash: BytesN<32> = env.crypto().sha256(&buffer).into();
+        activity_mgr.record(LogEventType::RoleRevoked, None, &account, data_hash);
     }
 
     /// Circuit breaker: governance admin toggles pause for issuing (and linked token minting).
@@ -612,8 +606,10 @@ impl CertificateContract {
         Self::release_lock(&env);
 
         // Emit v1 event
-        env.events()
-            .publish((Symbol::new(&env, "v1_pause_updated"),), (caller.clone(), paused));
+        env.events().publish(
+            (Symbol::new(&env, "v1_pause_updated"),),
+            (caller.clone(), paused),
+        );
 
         // Emit v2 event
         let recorder = EventRecorder::new(&env, env.current_contract_address());
@@ -625,12 +621,7 @@ impl CertificateContract {
         buffer.append(&caller.clone().to_xdr(&env));
         buffer.append(&paused.to_xdr(&env));
         let data_hash: BytesN<32> = env.crypto().sha256(&buffer).into();
-        activity_mgr.record(
-            LogEventType::PauseUpdated,
-            None,
-            &caller,
-            data_hash,
-        );
+        activity_mgr.record(LogEventType::PauseUpdated, None, &caller, data_hash);
     }
 
     /// Link an RS-Token contract so `set_paused` also pauses token minting (via `set_mint_pause`).
@@ -668,8 +659,10 @@ impl CertificateContract {
             .set(&DataKey::Proposal(id), &proposal);
 
         // Emit v1 event
-        env.events()
-            .publish((Symbol::new(&env, "v1_action_proposed"),), (caller.clone(), id));
+        env.events().publish(
+            (Symbol::new(&env, "v1_action_proposed"),),
+            (caller.clone(), id),
+        );
 
         // Emit v2 event
         let recorder = EventRecorder::new(&env, env.current_contract_address());
@@ -681,12 +674,7 @@ impl CertificateContract {
         buffer.append(&caller.clone().to_xdr(&env));
         buffer.append(&id.to_xdr(&env));
         let data_hash: BytesN<32> = env.crypto().sha256(&buffer).into();
-        activity_mgr.record(
-            LogEventType::ActionProposed,
-            None,
-            &caller,
-            data_hash,
-        );
+        activity_mgr.record(LogEventType::ActionProposed, None, &caller, data_hash);
 
         id
     }
@@ -728,7 +716,9 @@ impl CertificateContract {
 
             // Emit v2 event
             let recorder = EventRecorder::new(&env, env.current_contract_address());
-            recorder.publisher.publish_action_approved(&caller, proposal_id);
+            recorder
+                .publisher
+                .publish_action_approved(&caller, proposal_id);
 
             // Activity log
             let activity_mgr = ActivityLogManager::new(&env);
@@ -736,12 +726,7 @@ impl CertificateContract {
             buffer.append(&caller.clone().to_xdr(&env));
             buffer.append(&proposal_id.to_xdr(&env));
             let data_hash: BytesN<32> = env.crypto().sha256(&buffer).into();
-            activity_mgr.record(
-                LogEventType::ActionApproved,
-                None,
-                &caller,
-                data_hash,
-            );
+            activity_mgr.record(LogEventType::ActionApproved, None, &caller, data_hash);
         }
     }
 
@@ -756,7 +741,8 @@ impl CertificateContract {
         }
         Self::require_governance_admin(&env, &signer_a);
         Self::require_governance_admin(&env, &signer_b);
-        env.deployer().update_current_contract_wasm(new_wasm_hash.clone());
+        env.deployer()
+            .update_current_contract_wasm(new_wasm_hash.clone());
 
         // Emit v1 event (repurposed for direct upgrade)
         env.events().publish(
@@ -766,7 +752,9 @@ impl CertificateContract {
 
         // Emit v2 event as UpgradeExecuted
         let recorder = EventRecorder::new(&env, env.current_contract_address());
-        recorder.publisher.publish_upgrade_executed(&signer_a, new_wasm_hash.clone());
+        recorder
+            .publisher
+            .publish_upgrade_executed(&signer_a, new_wasm_hash.clone());
 
         // Activity log
         let activity_mgr = ActivityLogManager::new(&env);
@@ -774,12 +762,7 @@ impl CertificateContract {
         buffer.append(&signer_a.clone().to_xdr(&env));
         buffer.append(&signer_b.clone().to_xdr(&env));
         let data_hash: BytesN<32> = env.crypto().sha256(&buffer).into();
-        activity_mgr.record(
-            LogEventType::UpgradeExecuted,
-            None,
-            &signer_a,
-            data_hash,
-        );
+        activity_mgr.record(LogEventType::UpgradeExecuted, None, &signer_a, data_hash);
     }
 
     /// Propose an upgrade with time-lock (24-hour delay)
@@ -813,19 +796,17 @@ impl CertificateContract {
 
         // Emit v2 event
         let recorder = EventRecorder::new(&env, env.current_contract_address());
-        recorder.publisher.publish_upgrade_proposed(&caller, new_wasm_hash, &changelog);
+        recorder
+            .publisher
+            .publish_upgrade_proposed(&caller, new_wasm_hash, &changelog);
 
         // Activity log
         let activity_mgr = ActivityLogManager::new(&env);
         let env_ref = &env;
         let mut buffer = Bytes::new(&env);
-        buffer.append(&caller.clone().to_xdr(&env)); let data_hash: BytesN<32> = env.crypto().sha256(&buffer).into();
-        activity_mgr.record(
-            LogEventType::UpgradeProposed,
-            None,
-            &caller,
-            data_hash,
-        );
+        buffer.append(&caller.clone().to_xdr(&env));
+        let data_hash: BytesN<32> = env.crypto().sha256(&buffer).into();
+        activity_mgr.record(LogEventType::UpgradeProposed, None, &caller, data_hash);
 
         env.ledger().timestamp()
     }
@@ -860,19 +841,17 @@ impl CertificateContract {
 
         // Emit v2 event
         let recorder = EventRecorder::new(&env, env.current_contract_address());
-        recorder.publisher.publish_upgrade_approved(&caller, pending.approval_mask);
+        recorder
+            .publisher
+            .publish_upgrade_approved(&caller, pending.approval_mask);
 
         // Activity log
         let activity_mgr = ActivityLogManager::new(&env);
         let env_ref = &env;
         let mut buffer = Bytes::new(&env);
-        buffer.append(&caller.clone().to_xdr(&env)); let data_hash: BytesN<32> = env.crypto().sha256(&buffer).into();
-        activity_mgr.record(
-            LogEventType::UpgradeApproved,
-            None,
-            &caller,
-            data_hash,
-        );
+        buffer.append(&caller.clone().to_xdr(&env));
+        let data_hash: BytesN<32> = env.crypto().sha256(&buffer).into();
+        activity_mgr.record(LogEventType::UpgradeApproved, None, &caller, data_hash);
     }
 
     /// Execute a pending upgrade after time-lock expires and 2-of-3 approval
@@ -904,19 +883,17 @@ impl CertificateContract {
 
         // Emit v2 event
         let recorder = EventRecorder::new(&env, env.current_contract_address());
-        recorder.publisher.publish_upgrade_executed(&caller, pending.new_wasm_hash.clone());
+        recorder
+            .publisher
+            .publish_upgrade_executed(&caller, pending.new_wasm_hash.clone());
 
         // Activity log
         let activity_mgr = ActivityLogManager::new(&env);
         let env_ref = &env;
         let mut buffer = Bytes::new(&env);
-        buffer.append(&caller.clone().to_xdr(&env)); let data_hash: BytesN<32> = env.crypto().sha256(&buffer).into();
-        activity_mgr.record(
-            LogEventType::UpgradeExecuted,
-            None,
-            &caller,
-            data_hash,
-        );
+        buffer.append(&caller.clone().to_xdr(&env));
+        let data_hash: BytesN<32> = env.crypto().sha256(&buffer).into();
+        activity_mgr.record(LogEventType::UpgradeExecuted, None, &caller, data_hash);
     }
 
     /// Cancel a pending upgrade (requires governance admin)
@@ -938,13 +915,9 @@ impl CertificateContract {
         let activity_mgr = ActivityLogManager::new(&env);
         let env_ref = &env;
         let mut buffer = Bytes::new(&env);
-        buffer.append(&caller.clone().to_xdr(&env)); let data_hash: BytesN<32> = env.crypto().sha256(&buffer).into();
-        activity_mgr.record(
-            LogEventType::UpgradeCancelled,
-            None,
-            &caller,
-            data_hash,
-        );
+        buffer.append(&caller.clone().to_xdr(&env));
+        let data_hash: BytesN<32> = env.crypto().sha256(&buffer).into();
+        activity_mgr.record(LogEventType::UpgradeCancelled, None, &caller, data_hash);
     }
 
     /// Get the current contract version
@@ -983,7 +956,12 @@ impl CertificateContract {
         // Emit v1 event
         env.events().publish(
             (Symbol::new(&env, "v1_emergency_rollback"),),
-            (signer_a.clone(), signer_b.clone(), target_version, wasm_hash.clone()),
+            (
+                signer_a.clone(),
+                signer_b.clone(),
+                target_version,
+                wasm_hash.clone(),
+            ),
         );
 
         // Emit v2 event
@@ -1000,12 +978,7 @@ impl CertificateContract {
         let mut buffer = Bytes::new(&env);
         buffer.append(&signer_a.clone().to_xdr(&env));
         let data_hash: BytesN<32> = env.crypto().sha256(&buffer).into();
-        activity_mgr.record(
-            LogEventType::EmergencyRollback,
-            None,
-            &signer_a,
-            data_hash,
-        );
+        activity_mgr.record(LogEventType::EmergencyRollback, None, &signer_a, data_hash);
     }
 
     /// Add an admin with specific role and permissions
@@ -1024,19 +997,17 @@ impl CertificateContract {
 
         // Emit v2 event
         let recorder = EventRecorder::new(&env, env.current_contract_address());
-        recorder.publisher.publish_admin_added(&caller, &new_admin, role as u32);
+        recorder
+            .publisher
+            .publish_admin_added(&caller, &new_admin, role as u32);
 
         // Activity log
         let activity_mgr = ActivityLogManager::new(&env);
         let env_ref = &env;
         let mut buffer = Bytes::new(&env);
-        buffer.append(&caller.clone().to_xdr(&env)); let data_hash: BytesN<32> = env.crypto().sha256(&buffer).into();
-        activity_mgr.record(
-            LogEventType::AdminAdded,
-            None,
-            &new_admin,
-            data_hash,
-        );
+        buffer.append(&caller.clone().to_xdr(&env));
+        let data_hash: BytesN<32> = env.crypto().sha256(&buffer).into();
+        activity_mgr.record(LogEventType::AdminAdded, None, &new_admin, data_hash);
     }
 
     /// Remove an admin
@@ -1054,19 +1025,17 @@ impl CertificateContract {
 
         // Emit v2 event
         let recorder = EventRecorder::new(&env, env.current_contract_address());
-        recorder.publisher.publish_admin_removed(&caller, &admin_to_remove);
+        recorder
+            .publisher
+            .publish_admin_removed(&caller, &admin_to_remove);
 
         // Activity log
         let activity_mgr = ActivityLogManager::new(&env);
         let env_ref = &env;
         let mut buffer = Bytes::new(&env);
-        buffer.append(&caller.clone().to_xdr(&env)); let data_hash: BytesN<32> = env.crypto().sha256(&buffer).into();
-        activity_mgr.record(
-            LogEventType::AdminRemoved,
-            None,
-            &caller,
-            data_hash,
-        );
+        buffer.append(&caller.clone().to_xdr(&env));
+        let data_hash: BytesN<32> = env.crypto().sha256(&buffer).into();
+        activity_mgr.record(LogEventType::AdminRemoved, None, &caller, data_hash);
     }
 
     /// Get admin policy for an address
@@ -1094,13 +1063,16 @@ impl CertificateContract {
 
         // Emit v2 event
         let recorder = EventRecorder::new(&env, env.current_contract_address());
-        recorder.publisher.publish_ownership_transferred(&caller, &new_owner);
+        recorder
+            .publisher
+            .publish_ownership_transferred(&caller, &new_owner);
 
         // Activity log
         let activity_mgr = ActivityLogManager::new(&env);
         let env_ref = &env;
         let mut buffer = Bytes::new(&env);
-        buffer.append(&caller.clone().to_xdr(&env)); let data_hash: BytesN<32> = env.crypto().sha256(&buffer).into();
+        buffer.append(&caller.clone().to_xdr(&env));
+        let data_hash: BytesN<32> = env.crypto().sha256(&buffer).into();
         activity_mgr.record(
             LogEventType::OwnershipTransferred,
             None,
@@ -1130,20 +1102,18 @@ impl CertificateContract {
 
                 // Emit v2 event
                 let recorder = EventRecorder::new(&env, env.current_contract_address());
-                recorder.publisher.publish_mint_cap_updated(old_cap, new_cap);
+                recorder
+                    .publisher
+                    .publish_mint_cap_updated(old_cap, new_cap);
 
                 // Activity log
                 let activity_mgr = ActivityLogManager::new(&env);
                 let caller = env.current_contract_address();
                 let env_ref = &env;
                 let mut buffer = Bytes::new(&env);
-                buffer.append(&caller.clone().to_xdr(&env)); let data_hash: BytesN<32> = env.crypto().sha256(&buffer).into();
-                activity_mgr.record(
-                    LogEventType::MintCapUpdated,
-                    None,
-                    &caller,
-                    data_hash,
-                );
+                buffer.append(&caller.clone().to_xdr(&env));
+                let data_hash: BytesN<32> = env.crypto().sha256(&buffer).into();
+                activity_mgr.record(LogEventType::MintCapUpdated, None, &caller, data_hash);
             }
             PendingAdminAction::Upgrade(new_wasm_hash) => {
                 env.deployer().update_current_contract_wasm(new_wasm_hash);
@@ -1213,7 +1183,11 @@ impl CertificateContract {
             );
 
             // Update statistics
-            stats_mgr.increment_minted(token_id, &student, &Self::course_id_from_symbol(&env, &course_symbol));
+            stats_mgr.increment_minted(
+                token_id,
+                &student,
+                &Self::course_id_from_symbol(&env, &course_symbol),
+            );
 
             // Record activity
             activity_mgr.record(
@@ -1328,7 +1302,11 @@ impl CertificateContract {
             );
 
             // Update stats per certificate
-            stats_mgr.increment_minted(token_id, &student, &Self::course_id_from_symbol(&env, &course_symbol));
+            stats_mgr.increment_minted(
+                token_id,
+                &student,
+                &Self::course_id_from_symbol(&env, &course_symbol),
+            );
 
             // Record activity for this certificate
             activity_mgr.record(
@@ -1451,7 +1429,11 @@ impl CertificateContract {
         for i in 0..batch_size {
             let recipient = recipients.get(i).unwrap();
 
-            let token_id = crate::events::generate_token_id(&env, &recipient.course_symbol, &recipient.address);
+            let token_id = crate::events::generate_token_id(
+                &env,
+                &recipient.course_symbol,
+                &recipient.address,
+            );
             token_ids.push_back(token_id);
 
             let cert = Certificate {
@@ -1467,7 +1449,8 @@ impl CertificateContract {
             Self::persist_certificate(&env, &cert);
 
             // Compute metadata hash
-            let metadata_hash = compute_metadata_hash(&env, &course_name, &recipient.grade, &cert.did);
+            let metadata_hash =
+                compute_metadata_hash(&env, &course_name, &recipient.grade, &cert.did);
 
             // Emit individual certificate event (v2)
             let recorder = EventRecorder::new(&env, contract_address.clone());
@@ -1573,13 +1556,9 @@ impl CertificateContract {
         let activity_mgr = ActivityLogManager::new(&env);
         let env_ref = &env;
         let mut buffer = Bytes::new(&env);
-        buffer.append(&caller.clone().to_xdr(&env)); let data_hash: BytesN<32> = env.crypto().sha256(&buffer).into();
-        activity_mgr.record(
-            LogEventType::Revoked,
-            Some(token_id),
-            &student,
-            data_hash,
-        );
+        buffer.append(&caller.clone().to_xdr(&env));
+        let data_hash: BytesN<32> = env.crypto().sha256(&buffer).into();
+        activity_mgr.record(LogEventType::Revoked, Some(token_id), &student, data_hash);
     }
 
     pub fn get_certificate(
@@ -1649,9 +1628,14 @@ impl CertificateContract {
 
         // Emit v2 event
         let token_id = crate::events::generate_token_id(&env, &course_symbol, &student);
-        let new_expiry = env.ledger().timestamp().saturating_add(CERT_TTL_LEDGERS as u64 * 5); // 5 seconds per ledger
+        let new_expiry = env
+            .ledger()
+            .timestamp()
+            .saturating_add(CERT_TTL_LEDGERS as u64 * 5); // 5 seconds per ledger
         let recorder = EventRecorder::new(&env, env.current_contract_address());
-        recorder.publisher.publish_renewed(token_id, &caller, new_expiry);
+        recorder
+            .publisher
+            .publish_renewed(token_id, &caller, new_expiry);
 
         // Update statistics
         let stats_mgr = StatisticsManager::new(&env);
@@ -1661,13 +1645,9 @@ impl CertificateContract {
         let activity_mgr = ActivityLogManager::new(&env);
         let env_ref = &env;
         let mut buffer = Bytes::new(&env);
-        buffer.append(&caller.clone().to_xdr(&env)); let data_hash: BytesN<32> = env.crypto().sha256(&buffer).into();
-        activity_mgr.record(
-            LogEventType::Renewed,
-            Some(token_id),
-            &student,
-            data_hash,
-        );
+        buffer.append(&caller.clone().to_xdr(&env));
+        let data_hash: BytesN<32> = env.crypto().sha256(&buffer).into();
+        activity_mgr.record(LogEventType::Renewed, Some(token_id), &student, data_hash);
     }
 
     pub fn execute_meta_tx(
@@ -1711,7 +1691,8 @@ impl CertificateContract {
         }
         Self::record_mint(&env, 1);
 
-        let token_id = crate::events::generate_token_id(&env, &call_data.course_symbol, &call_data.student);
+        let token_id =
+            crate::events::generate_token_id(&env, &call_data.course_symbol, &call_data.student);
 
         let cert = Certificate {
             course_symbol: call_data.course_symbol.clone(),
@@ -1835,19 +1816,17 @@ impl CertificateContract {
 
         // Emit v2 event
         let recorder = EventRecorder::new(&env, env.current_contract_address());
-        recorder.publisher.publish_did_updated(&caller, &did, timestamp);
+        recorder
+            .publisher
+            .publish_did_updated(&caller, &did, timestamp);
 
         // Activity log
         let activity_mgr = ActivityLogManager::new(&env);
         let env_ref = &env;
         let mut buffer = Bytes::new(&env);
-        buffer.append(&caller.clone().to_xdr(&env)); let data_hash: BytesN<32> = env.crypto().sha256(&buffer).into();
-        activity_mgr.record(
-            LogEventType::DidUpdated,
-            None,
-            &caller,
-            data_hash,
-        );
+        buffer.append(&caller.clone().to_xdr(&env));
+        let data_hash: BytesN<32> = env.crypto().sha256(&buffer).into();
+        activity_mgr.record(LogEventType::DidUpdated, None, &caller, data_hash);
     }
 
     pub fn get_did(env: Env, student: Address) -> Option<StudentDid> {
@@ -1871,8 +1850,10 @@ impl CertificateContract {
         Self::sync_did_to_student_certificates(&env, &student, None);
 
         // Emit v1 event
-        env.events()
-            .publish((Symbol::new(&env, "v1_did_removed"),), (caller.clone(), student.clone()));
+        env.events().publish(
+            (Symbol::new(&env, "v1_did_removed"),),
+            (caller.clone(), student.clone()),
+        );
 
         // Emit v2 event
         let recorder = EventRecorder::new(&env, env.current_contract_address());
@@ -1882,13 +1863,9 @@ impl CertificateContract {
         let activity_mgr = ActivityLogManager::new(&env);
         let env_ref = &env;
         let mut buffer = Bytes::new(&env);
-        buffer.append(&caller.clone().to_xdr(&env)); let data_hash: BytesN<32> = env.crypto().sha256(&buffer).into();
-        activity_mgr.record(
-            LogEventType::DidRemoved,
-            None,
-            &student,
-            data_hash,
-        );
+        buffer.append(&caller.clone().to_xdr(&env));
+        let data_hash: BytesN<32> = env.crypto().sha256(&buffer).into();
+        activity_mgr.record(LogEventType::DidRemoved, None, &student, data_hash);
     }
 
     /// Enforce a max byte length and reject non-printable ASCII characters (< 0x20 or
@@ -2225,17 +2202,28 @@ impl CertificateContract {
 
     /// Verifies a file hash against the on-chain notarization records.
     /// Returns the record if found, which includes the timestamp and owner.
-    pub fn verify_file(env: Env, hash: BytesN<32>) -> Option<file_notarization::NotarizationRecord> {
+    pub fn verify_file(
+        env: Env,
+        hash: BytesN<32>,
+    ) -> Option<file_notarization::NotarizationRecord> {
         file_notarization::NotarizationManager::verify(&env, hash)
     }
 
     /// Retrieves all files notarized by a specific address.
-    pub fn get_notarization_history(env: Env, owner: Address) -> Vec<file_notarization::NotarizationRecord> {
+    pub fn get_notarization_history(
+        env: Env,
+        owner: Address,
+    ) -> Vec<file_notarization::NotarizationRecord> {
         file_notarization::NotarizationManager::get_history(&env, owner)
     }
 
     /// Performs bulk notarization for multiple file hashes in a single transaction.
-    pub fn bulk_notarize_files(env: Env, owner: Address, hashes: Vec<BytesN<32>>, metadata: Vec<String>) {
+    pub fn bulk_notarize_files(
+        env: Env,
+        owner: Address,
+        hashes: Vec<BytesN<32>>,
+        metadata: Vec<String>,
+    ) {
         file_notarization::NotarizationManager::bulk_notarize(&env, owner, hashes, metadata);
     }
 
@@ -2243,13 +2231,18 @@ impl CertificateContract {
 
     /// Verify a student's identity for sybil-resistant voting.
     /// Only governance admins can verify students.
-    pub fn verify_student_identity(env: Env, caller: Address, student: Address, did: String) -> bool {
+    pub fn verify_student_identity(
+        env: Env,
+        caller: Address,
+        student: Address,
+        did: String,
+    ) -> bool {
         caller.require_auth();
         Self::require_governance_admin(&env, &caller);
 
         let success = sybil_resistance::verify_identity(&env, student.clone(), did.clone());
         if !success {
-             panic_with_error!(&env, CertError::SybilVerificationFailed);
+            panic_with_error!(&env, CertError::SybilVerificationFailed);
         }
 
         let recorder = EventRecorder::new(&env, env.current_contract_address());
@@ -2260,16 +2253,30 @@ impl CertificateContract {
 
     /// Create a new quadratic voting proposal.
     /// Creator must be a sybil-verified student.
-    pub fn create_qv_proposal(env: Env, creator: Address, title: String, description: String, duration: u64) -> u64 {
+    pub fn create_qv_proposal(
+        env: Env,
+        creator: Address,
+        title: String,
+        description: String,
+        duration: u64,
+    ) -> u64 {
         creator.require_auth();
         if !sybil_resistance::is_verified(&env, &creator) {
             panic_with_error!(&env, CertError::Unauthorized);
         }
 
-        let id = quadratic_voting::create_proposal(&env, creator.clone(), title.clone(), description.clone(), duration);
+        let id = quadratic_voting::create_proposal(
+            &env,
+            creator.clone(),
+            title.clone(),
+            description.clone(),
+            duration,
+        );
 
         let recorder = EventRecorder::new(&env, env.current_contract_address());
-        recorder.publisher.publish_proposal_created(&creator, id, &title);
+        recorder
+            .publisher
+            .publish_proposal_created(&creator, id, &title);
 
         id
     }
@@ -2280,7 +2287,9 @@ impl CertificateContract {
         user.require_auth();
 
         let abs_votes = if votes < 0 { -votes } else { votes };
-        let cost = (abs_votes as u128).checked_mul(abs_votes as u128).unwrap_or(u128::MAX);
+        let cost = (abs_votes as u128)
+            .checked_mul(abs_votes as u128)
+            .unwrap_or(u128::MAX);
 
         if sybil_resistance::get_governance_credits(&env, &user) < cost {
             panic_with_error!(&env, CertError::InsufficientGovernanceCredits);
@@ -2288,23 +2297,27 @@ impl CertificateContract {
 
         let success = quadratic_voting::cast_vote(&env, user.clone(), proposal_id, votes);
         if !success {
-             panic_with_error!(&env, CertError::InvalidProposal);
+            panic_with_error!(&env, CertError::InvalidProposal);
         }
 
         let recorder = EventRecorder::new(&env, env.current_contract_address());
-        recorder.publisher.publish_vote_cast(&user, proposal_id, votes, cost);
+        recorder
+            .publisher
+            .publish_vote_cast(&user, proposal_id, votes, cost);
     }
 
     /// Finalize and execute a proposal after its deadline.
     pub fn execute_qv_proposal(env: Env, proposal_id: u64) {
         let success = quadratic_voting::execute_proposal(&env, proposal_id);
         if !success {
-             panic_with_error!(&env, CertError::InvalidProposal);
+            panic_with_error!(&env, CertError::InvalidProposal);
         }
 
         let proposal = quadratic_voting::get_proposal(&env, proposal_id).unwrap();
         let recorder = EventRecorder::new(&env, env.current_contract_address());
-        recorder.publisher.publish_proposal_executed(proposal_id, proposal.status as u32);
+        recorder
+            .publisher
+            .publish_proposal_executed(proposal_id, proposal.status as u32);
     }
 
     /// Get current governance credit balance for an address.
@@ -2323,11 +2336,10 @@ impl CertificateContract {
     }
 }
 
-
-#[cfg(test)]
-mod tests;
 #[cfg(test)]
 mod prop_tests;
+#[cfg(test)]
+mod tests;
 
 /// Helper function to compute metadata hash for certificate.
 fn compute_metadata_hash(

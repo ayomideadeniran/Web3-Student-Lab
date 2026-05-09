@@ -3,9 +3,7 @@
 //! This module defines structured events for all certificate operations,
 //! optimized for gas efficiency and easy parsing by indexers.
 
-use soroban_sdk::{
-    contracttype, Address, Bytes, BytesN, Env, String, Symbol, Vec,
-};
+use soroban_sdk::{contracttype, Address, Bytes, BytesN, Env, String, Symbol, Vec};
 
 /// Certificate event types for on-chain activity logging.
 /// Each variant represents a distinct certificate operation.
@@ -110,7 +108,10 @@ pub struct EventPublisher<'a> {
 impl<'a> EventPublisher<'a> {
     /// Create a new EventPublisher.
     pub fn new(env: &'a Env, contract_address: Address) -> Self {
-        Self { env, contract_address }
+        Self {
+            env,
+            contract_address,
+        }
     }
 
     /// Publish a certificate minted event.
@@ -138,17 +139,19 @@ impl<'a> EventPublisher<'a> {
                 Symbol::new(self.env, "cert_minted"),
                 Symbol::new(self.env, "v2"),
             ),
-            (token_id, recipient.clone(), course_id_copy, metadata_hash_copy, event.minted_at, minted_by.clone()),
+            (
+                token_id,
+                recipient.clone(),
+                course_id_copy,
+                metadata_hash_copy,
+                event.minted_at,
+                minted_by.clone(),
+            ),
         );
     }
 
     /// Publish a certificate revoked event.
-    pub fn publish_revoked(
-        &self,
-        token_id: u128,
-        revoked_by: &Address,
-        reason: u32,
-    ) {
+    pub fn publish_revoked(&self, token_id: u128, revoked_by: &Address, reason: u32) {
         let event = CertificateRevokedEvent {
             token_id,
             revoked_by: revoked_by.clone(),
@@ -187,17 +190,18 @@ impl<'a> EventPublisher<'a> {
                 Symbol::new(self.env, "batch_minted"),
                 Symbol::new(self.env, "v2"),
             ),
-            (token_ids, course_id_copy, count, event.minted_at, minted_by.clone()),
+            (
+                token_ids,
+                course_id_copy,
+                count,
+                event.minted_at,
+                minted_by.clone(),
+            ),
         );
     }
 
     /// Publish a certificate renewed event.
-    pub fn publish_renewed(
-        &self,
-        token_id: u128,
-        renewed_by: &Address,
-        new_expiry: u64,
-    ) {
+    pub fn publish_renewed(&self, token_id: u128, renewed_by: &Address, new_expiry: u64) {
         let event = CertificateRenewedEvent {
             token_id,
             renewed_by: renewed_by.clone(),
@@ -314,7 +318,12 @@ impl<'a> EventPublisher<'a> {
     }
 
     /// Publish an upgrade proposed event.
-    pub fn publish_upgrade_proposed(&self, caller: &Address, wasm_hash: BytesN<32>, changelog: &String) {
+    pub fn publish_upgrade_proposed(
+        &self,
+        caller: &Address,
+        wasm_hash: BytesN<32>,
+        changelog: &String,
+    ) {
         self.env.events().publish(
             (
                 Symbol::new(self.env, "upgrade_proposed"),
@@ -402,13 +411,24 @@ impl<'a> EventPublisher<'a> {
     }
 
     /// Publish an emergency rollback event.
-    pub fn publish_emergency_rollback(&self, signer_a: &Address, signer_b: &Address, target_version: u32, wasm_hash: BytesN<32>) {
+    pub fn publish_emergency_rollback(
+        &self,
+        signer_a: &Address,
+        signer_b: &Address,
+        target_version: u32,
+        wasm_hash: BytesN<32>,
+    ) {
         self.env.events().publish(
             (
                 Symbol::new(self.env, "emergency_rollback"),
                 Symbol::new(self.env, "v2"),
             ),
-            (signer_a.clone(), signer_b.clone(), target_version, wasm_hash),
+            (
+                signer_a.clone(),
+                signer_b.clone(),
+                target_version,
+                wasm_hash,
+            ),
         );
     }
 
@@ -444,7 +464,6 @@ impl<'a> EventPublisher<'a> {
             (caller.clone(), new_owner.clone()),
         );
     }
-
 }
 
 /// Event recorder that emits v2 events for the contract.
@@ -464,8 +483,16 @@ impl<'a> EventRecorder<'a> {
     }
 
     /// Record a certificate minted event.
-    pub fn record_minted(&self, token_id: u128, recipient: &Address, course_id: BytesN<32>, metadata_hash: BytesN<32>, minted_by: &Address) {
-        self.publisher.publish_minted(token_id, recipient, course_id, metadata_hash, minted_by);
+    pub fn record_minted(
+        &self,
+        token_id: u128,
+        recipient: &Address,
+        course_id: BytesN<32>,
+        metadata_hash: BytesN<32>,
+        minted_by: &Address,
+    ) {
+        self.publisher
+            .publish_minted(token_id, recipient, course_id, metadata_hash, minted_by);
     }
 
     /// Record a certificate revoked event.
@@ -474,13 +501,21 @@ impl<'a> EventRecorder<'a> {
     }
 
     /// Record a batch minted event.
-    pub fn record_batch_minted(&self, token_ids: Vec<u128>, course_id: BytesN<32>, count: u32, minted_by: &Address) {
-        self.publisher.publish_batch_minted(token_ids, course_id, count, minted_by);
+    pub fn record_batch_minted(
+        &self,
+        token_ids: Vec<u128>,
+        course_id: BytesN<32>,
+        count: u32,
+        minted_by: &Address,
+    ) {
+        self.publisher
+            .publish_batch_minted(token_ids, course_id, count, minted_by);
     }
 
     /// Record a certificate renewed event.
     pub fn record_renewed(&self, token_id: u128, renewed_by: &Address, new_expiry: u64) {
-        self.publisher.publish_renewed(token_id, renewed_by, new_expiry);
+        self.publisher
+            .publish_renewed(token_id, renewed_by, new_expiry);
     }
 }
 
@@ -492,7 +527,7 @@ pub fn generate_token_id(env: &Env, course_symbol: &Symbol, student: &Address) -
     buffer.append(&course_symbol.clone().to_xdr(env));
     buffer.append(&student.clone().to_xdr(env));
     let hash_bytes = env.crypto().sha256(&buffer);
-    
+
     // Extract first 16 bytes for u128
     let mut hash_arr = [0u8; 16];
     for i in 0..16 {

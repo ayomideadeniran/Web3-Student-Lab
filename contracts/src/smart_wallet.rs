@@ -79,7 +79,9 @@ impl SmartWalletContract {
         }
 
         env.storage().instance().set(&WalletKey::Owner, &owner);
-        env.storage().instance().set(&WalletKey::Threshold, &threshold);
+        env.storage()
+            .instance()
+            .set(&WalletKey::Threshold, &threshold);
         env.storage().instance().set(&WalletKey::Signers, &signers);
         env.storage().instance().set(&WalletKey::Nonce, &0u64);
         env.storage().instance().set(&WalletKey::Locked, &false);
@@ -96,10 +98,8 @@ impl SmartWalletContract {
                 .set(&WalletKey::Guardian(guardian.clone()), &true);
         }
 
-        env.events().publish(
-            (symbol_short!("wallet"), symbol_short!("created")),
-            owner,
-        );
+        env.events()
+            .publish((symbol_short!("wallet"), symbol_short!("created")), owner);
     }
 
     pub fn add_session_key(

@@ -37,7 +37,14 @@ pub struct AirdropManager;
 
 #[contractimpl]
 impl AirdropManager {
-    pub fn init(env: Env, admin: Address, token: Address, token_id: u32, merkle_root: BytesN<32>, deadline: u64) {
+    pub fn init(
+        env: Env,
+        admin: Address,
+        token: Address,
+        token_id: u32,
+        merkle_root: BytesN<32>,
+        deadline: u64,
+    ) {
         if env.storage().instance().has(&DataKey::Admin) {
             panic_with_error!(&env, AirdropError::AlreadyInitialized);
         }
@@ -111,7 +118,9 @@ impl AirdropManager {
             .persistent()
             .set(&DataKey::Claimed(user.clone()), &true);
         // Extend TTL for claimed status
-        env.storage().persistent().extend_ttl(&DataKey::Claimed(user.clone()), 1000, 5000);
+        env.storage()
+            .persistent()
+            .extend_ttl(&DataKey::Claimed(user.clone()), 1000, 5000);
 
         // 7. Transfer tokens
         let token_addr: Address = env.storage().instance().get(&DataKey::Token).unwrap();
@@ -132,7 +141,9 @@ impl AirdropManager {
         if caller != admin {
             panic_with_error!(&env, AirdropError::Unauthorized);
         }
-        env.storage().instance().set(&DataKey::MerkleRoot, &new_root);
+        env.storage()
+            .instance()
+            .set(&DataKey::MerkleRoot, &new_root);
     }
 
     pub fn set_blacklist(env: Env, caller: Address, user: Address, blacklisted: bool) {
@@ -185,7 +196,12 @@ impl AirdropManager {
         let client = crate::token::RsTokenContractClient::new(&env, &token_addr);
         let balance = client.get_balance(&env.current_contract_address(), &token_id);
         if balance > 0 {
-            client.transfer(&env.current_contract_address(), &recipient, &token_id, &balance);
+            client.transfer(
+                &env.current_contract_address(),
+                &recipient,
+                &token_id,
+                &balance,
+            );
         }
     }
 }

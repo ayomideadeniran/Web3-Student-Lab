@@ -1,6 +1,6 @@
 use soroban_sdk::{
-    contract, contracterror, contractimpl, contracttype, Address, Env, String, Map, Symbol, Vec,
-    panic_with_error
+    contract, contracterror, contractimpl, contracttype, panic_with_error, Address, Env, Map,
+    String, Symbol, Vec,
 };
 
 #[contracttype]
@@ -27,10 +27,10 @@ pub struct Listing {
 pub enum DataKey {
     Admin,
     AssetCounter,
-    Asset(u32), // asset_id -> AssetMetadata
-    AssetOwner(u32), // asset_id -> Address
-    AssetListing(u32), // asset_id -> Listing
-    GameAssets(String), // game_id -> Vec<u32>
+    Asset(u32),          // asset_id -> AssetMetadata
+    AssetOwner(u32),     // asset_id -> Address
+    AssetListing(u32),   // asset_id -> Listing
+    GameAssets(String),  // game_id -> Vec<u32>
     MarketplaceFeeRatio, // e.g., 250 for 2.5%
     FeeCollector,
 }
@@ -54,8 +54,12 @@ impl GamingAssetExchangeContract {
     pub fn init(env: Env, admin: Address, fee_collector: Address, fee_ratio: u32) {
         admin.require_auth();
         env.storage().instance().set(&DataKey::Admin, &admin);
-        env.storage().instance().set(&DataKey::FeeCollector, &fee_collector);
-        env.storage().instance().set(&DataKey::MarketplaceFeeRatio, &fee_ratio);
+        env.storage()
+            .instance()
+            .set(&DataKey::FeeCollector, &fee_collector);
+        env.storage()
+            .instance()
+            .set(&DataKey::MarketplaceFeeRatio, &fee_ratio);
         env.storage().instance().set(&DataKey::AssetCounter, &0u32);
     }
 
@@ -72,7 +76,11 @@ impl GamingAssetExchangeContract {
     ) -> u32 {
         caller.require_auth();
 
-        let mut counter: u32 = env.storage().instance().get(&DataKey::AssetCounter).unwrap_or(0);
+        let mut counter: u32 = env
+            .storage()
+            .instance()
+            .get(&DataKey::AssetCounter)
+            .unwrap_or(0);
         counter += 1;
 
         let metadata = AssetMetadata {
@@ -84,9 +92,15 @@ impl GamingAssetExchangeContract {
             attributes,
         };
 
-        env.storage().instance().set(&DataKey::Asset(counter), &metadata);
-        env.storage().instance().set(&DataKey::AssetOwner(counter), &to);
-        env.storage().instance().set(&DataKey::AssetCounter, &counter);
+        env.storage()
+            .instance()
+            .set(&DataKey::Asset(counter), &metadata);
+        env.storage()
+            .instance()
+            .set(&DataKey::AssetOwner(counter), &to);
+        env.storage()
+            .instance()
+            .set(&DataKey::AssetCounter, &counter);
 
         let mut assets: Vec<u32> = env
             .storage()
@@ -94,9 +108,14 @@ impl GamingAssetExchangeContract {
             .get(&DataKey::GameAssets(game_id.clone()))
             .unwrap_or(Vec::new(&env));
         assets.push_back(counter);
-        env.storage().instance().set(&DataKey::GameAssets(game_id), &assets);
+        env.storage()
+            .instance()
+            .set(&DataKey::GameAssets(game_id), &assets);
 
-        env.events().publish((Symbol::new(&env, "Mint"), Symbol::new(&env, "asset_id")), (counter, to.clone()));
+        env.events().publish(
+            (Symbol::new(&env, "Mint"), Symbol::new(&env, "asset_id")),
+            (counter, to.clone()),
+        );
 
         counter
     }
@@ -104,10 +123,12 @@ impl GamingAssetExchangeContract {
     pub fn transfer_asset(env: Env, from: Address, to: Address, asset_id: u32) {
         from.require_auth();
 
-        let current_owner: Address = env.storage().instance().get(&DataKey::AssetOwner(asset_id)).unwrap_or_else(|| {
-            panic_with_error!(&env, ExchangeError::AssetNotFound)
-        });
-        
+        let current_owner: Address = env
+            .storage()
+            .instance()
+            .get(&DataKey::AssetOwner(asset_id))
+            .unwrap_or_else(|| panic_with_error!(&env, ExchangeError::AssetNotFound));
+
         if from != current_owner {
             panic_with_error!(&env, ExchangeError::NotAuthorized);
         }
@@ -115,12 +136,17 @@ impl GamingAssetExchangeContract {
         // Cancel listing if transferring
         let listing_key = DataKey::AssetListing(asset_id);
         if env.storage().instance().has(&listing_key) {
-             env.storage().instance().remove(&listing_key);
+            env.storage().instance().remove(&listing_key);
         }
 
-        env.storage().instance().set(&DataKey::AssetOwner(asset_id), &to);
-        
-        env.events().publish((Symbol::new(&env, "Transfer"), Symbol::new(&env, "asset_id")), (from, to, asset_id));
+        env.storage()
+            .instance()
+            .set(&DataKey::AssetOwner(asset_id), &to);
+
+        env.events().publish(
+            (Symbol::new(&env, "Transfer"), Symbol::new(&env, "asset_id")),
+            (from, to, asset_id),
+        );
     }
 
     pub fn list_asset(env: Env, seller: Address, asset_id: u32, price: i128) {
@@ -130,9 +156,11 @@ impl GamingAssetExchangeContract {
             panic_with_error!(&env, ExchangeError::InvalidPrice);
         }
 
-        let owner: Address = env.storage().instance().get(&DataKey::AssetOwner(asset_id)).unwrap_or_else(|| {
-            panic_with_error!(&env, ExchangeError::AssetNotFound)
-        });
+        let owner: Address = env
+            .storage()
+            .instance()
+            .get(&DataKey::AssetOwner(asset_id))
+            .unwrap_or_else(|| panic_with_error!(&env, ExchangeError::AssetNotFound));
 
         if owner != seller {
             panic_with_error!(&env, ExchangeError::NotAuthorized);
@@ -144,23 +172,31 @@ impl GamingAssetExchangeContract {
             active: true,
         };
 
-        env.storage().instance().set(&DataKey::AssetListing(asset_id), &listing);
-        env.events().publish((Symbol::new(&env, "Listed"),), (asset_id, seller, price));
+        env.storage()
+            .instance()
+            .set(&DataKey::AssetListing(asset_id), &listing);
+        env.events()
+            .publish((Symbol::new(&env, "Listed"),), (asset_id, seller, price));
     }
 
     pub fn delist_asset(env: Env, seller: Address, asset_id: u32) {
         seller.require_auth();
 
-        let listing: Listing = env.storage().instance().get(&DataKey::AssetListing(asset_id)).unwrap_or_else(|| {
-            panic_with_error!(&env, ExchangeError::ListingNotFound)
-        });
+        let listing: Listing = env
+            .storage()
+            .instance()
+            .get(&DataKey::AssetListing(asset_id))
+            .unwrap_or_else(|| panic_with_error!(&env, ExchangeError::ListingNotFound));
 
         if listing.seller != seller {
             panic_with_error!(&env, ExchangeError::NotAuthorized);
         }
 
-        env.storage().instance().remove(&DataKey::AssetListing(asset_id));
-        env.events().publish((Symbol::new(&env, "Delisted"),), (asset_id, seller));
+        env.storage()
+            .instance()
+            .remove(&DataKey::AssetListing(asset_id));
+        env.events()
+            .publish((Symbol::new(&env, "Delisted"),), (asset_id, seller));
     }
 
     // In a real implementation this would involve a native token transfer or RS token.
@@ -168,9 +204,11 @@ impl GamingAssetExchangeContract {
     pub fn buy_asset(env: Env, buyer: Address, asset_id: u32) {
         buyer.require_auth();
 
-        let listing: Listing = env.storage().instance().get(&DataKey::AssetListing(asset_id)).unwrap_or_else(|| {
-            panic_with_error!(&env, ExchangeError::ListingNotFound)
-        });
+        let listing: Listing = env
+            .storage()
+            .instance()
+            .get(&DataKey::AssetListing(asset_id))
+            .unwrap_or_else(|| panic_with_error!(&env, ExchangeError::ListingNotFound));
 
         if !listing.active {
             panic_with_error!(&env, ExchangeError::ListingNotActive);
@@ -178,21 +216,30 @@ impl GamingAssetExchangeContract {
 
         // Normally we'd transfer funds from `buyer` to `listing.seller` minus fee to `fee_collector` here using a Token interface
 
-        env.storage().instance().set(&DataKey::AssetOwner(asset_id), &buyer);
-        env.storage().instance().remove(&DataKey::AssetListing(asset_id));
+        env.storage()
+            .instance()
+            .set(&DataKey::AssetOwner(asset_id), &buyer);
+        env.storage()
+            .instance()
+            .remove(&DataKey::AssetListing(asset_id));
 
-        env.events().publish((Symbol::new(&env, "Sale"),), (asset_id, listing.seller, buyer, listing.price));
+        env.events().publish(
+            (Symbol::new(&env, "Sale"),),
+            (asset_id, listing.seller, buyer, listing.price),
+        );
     }
 
     pub fn get_asset(env: Env, asset_id: u32) -> AssetMetadata {
-        env.storage().instance().get(&DataKey::Asset(asset_id)).unwrap_or_else(|| {
-            panic_with_error!(&env, ExchangeError::AssetNotFound)
-        })
+        env.storage()
+            .instance()
+            .get(&DataKey::Asset(asset_id))
+            .unwrap_or_else(|| panic_with_error!(&env, ExchangeError::AssetNotFound))
     }
 
     pub fn get_owner(env: Env, asset_id: u32) -> Address {
-        env.storage().instance().get(&DataKey::AssetOwner(asset_id)).unwrap_or_else(|| {
-            panic_with_error!(&env, ExchangeError::AssetNotFound)
-        })
+        env.storage()
+            .instance()
+            .get(&DataKey::AssetOwner(asset_id))
+            .unwrap_or_else(|| panic_with_error!(&env, ExchangeError::AssetNotFound))
     }
 }

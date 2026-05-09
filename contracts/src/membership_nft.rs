@@ -216,8 +216,10 @@ impl MembershipNftContract {
         let mut best: Option<Tier> = None;
         for i in 0..tokens.len() {
             let id = tokens.get(i).unwrap();
-            if let Some(info) =
-                env.storage().persistent().get::<_, TokenInfo>(&NftKey::Token(id))
+            if let Some(info) = env
+                .storage()
+                .persistent()
+                .get::<_, TokenInfo>(&NftKey::Token(id))
             {
                 best = Some(match best {
                     Some(t) if t.rank() >= info.tier.rank() => t,
@@ -316,7 +318,9 @@ impl MembershipNftContract {
         } else {
             cur.saturating_add(delta as u32)
         };
-        env.storage().instance().set(&NftKey::TierCount(tier), &next);
+        env.storage()
+            .instance()
+            .set(&NftKey::TierCount(tier), &next);
     }
 }
 

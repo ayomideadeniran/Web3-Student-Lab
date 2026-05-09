@@ -1,4 +1,4 @@
-use soroban_sdk::{Bytes, BytesN, Env, Vec, xdr::ToXdr};
+use soroban_sdk::{xdr::ToXdr, Bytes, BytesN, Env, Vec};
 
 pub fn verify(env: &Env, proof: Vec<BytesN<32>>, root: &BytesN<32>, leaf: &BytesN<32>) -> bool {
     let mut computed_hash = leaf.clone();

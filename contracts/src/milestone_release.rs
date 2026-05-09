@@ -1,5 +1,5 @@
-use soroban_sdk::{Env, Address, Symbol, Vec, contracttype};
 use crate::crowdfunding::{Campaign, CrowdfundingDataKey, Milestone};
+use soroban_sdk::{contracttype, Address, Env, Symbol, Vec};
 
 pub fn vote_on_milestone(env: &Env, voter: Address, campaign_id: u64, approve: bool) {
     voter.require_auth();
@@ -7,7 +7,10 @@ pub fn vote_on_milestone(env: &Env, voter: Address, campaign_id: u64, approve: b
     let contribution: i128 = env
         .storage()
         .instance()
-        .get(&CrowdfundingDataKey::Contribution(campaign_id, voter.clone()))
+        .get(&CrowdfundingDataKey::Contribution(
+            campaign_id,
+            voter.clone(),
+        ))
         .unwrap_or(0);
 
     if contribution == 0 {
@@ -37,11 +40,18 @@ pub fn vote_on_milestone(env: &Env, voter: Address, campaign_id: u64, approve: b
     milestones.set(milestone_idx, milestone);
     campaign.milestones = milestones;
 
-    env.storage().instance().set(&CrowdfundingDataKey::Campaign(campaign_id), &campaign);
+    env.storage()
+        .instance()
+        .set(&CrowdfundingDataKey::Campaign(campaign_id), &campaign);
 
     // Emit event
     env.events().publish(
-        (Symbol::new(env, "milestone_voted"), voter, campaign_id, milestone_idx),
+        (
+            Symbol::new(env, "milestone_voted"),
+            voter,
+            campaign_id,
+            milestone_idx,
+        ),
         approve,
     );
 }
@@ -76,11 +86,17 @@ pub fn release_milestone_funds(env: &Env, campaign_id: u64) {
             campaign.completed = true;
         }
 
-        env.storage().instance().set(&CrowdfundingDataKey::Campaign(campaign_id), &campaign);
+        env.storage()
+            .instance()
+            .set(&CrowdfundingDataKey::Campaign(campaign_id), &campaign);
 
         // Emit event
         env.events().publish(
-            (Symbol::new(env, "milestone_approved"), campaign_id, milestone_idx),
+            (
+                Symbol::new(env, "milestone_approved"),
+                campaign_id,
+                milestone_idx,
+            ),
             true,
         );
     } else {
@@ -97,8 +113,9 @@ pub fn process_refund(env: &Env, contributor: Address, campaign_id: u64) {
         .get(&CrowdfundingDataKey::Campaign(campaign_id))
         .expect("Campaign not found");
 
-    let is_failed = env.ledger().timestamp() > campaign.deadline && campaign.total_funded < campaign.goal;
-    
+    let is_failed =
+        env.ledger().timestamp() > campaign.deadline && campaign.total_funded < campaign.goal;
+
     // If goal met but a milestone was rejected or deadline passed without completion
     // For simplicity, we allow refunds if the campaign failed its goal or was manually marked for refund
     if !is_failed && !campaign.refunded {
@@ -118,7 +135,11 @@ pub fn process_refund(env: &Env, contributor: Address, campaign_id: u64) {
 
     // Emit event
     env.events().publish(
-        (Symbol::new(env, "refund_processed"), contributor, campaign_id),
+        (
+            Symbol::new(env, "refund_processed"),
+            contributor,
+            campaign_id,
+        ),
         contribution,
     );
 }

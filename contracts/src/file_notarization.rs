@@ -1,6 +1,6 @@
 #![no_std]
-use soroban_sdk::{contracttype, Address, BytesN, Env, String, Vec, Symbol};
-use crate::timestamping::{TimestampedProof, get_current_proof};
+use crate::timestamping::{get_current_proof, TimestampedProof};
+use soroban_sdk::{contracttype, Address, BytesN, Env, String, Symbol, Vec};
 
 /// Immutable record of a notarized file hash.
 #[contracttype]
@@ -30,7 +30,7 @@ pub struct NotarizationManager;
 
 impl NotarizationManager {
     /// Notarizes a file hash on-chain.
-    /// 
+    ///
     /// # Arguments
     /// * `env` - The Soroban environment.
     /// * `owner` - The address notarizing the file (must authorize).
@@ -40,7 +40,11 @@ impl NotarizationManager {
         owner.require_auth();
 
         // Check if already notarized to maintain immutability and uniqueness
-        if env.storage().persistent().has(&NotarizationKey::Record(hash.clone())) {
+        if env
+            .storage()
+            .persistent()
+            .has(&NotarizationKey::Record(hash.clone()))
+        {
             // We return early instead of panicking to save gas if the file is already protected
             return;
         }
@@ -53,17 +57,21 @@ impl NotarizationManager {
         };
 
         // Store the record indexed by hash
-        env.storage().persistent().set(&NotarizationKey::Record(hash.clone()), &record);
-        
+        env.storage()
+            .persistent()
+            .set(&NotarizationKey::Record(hash.clone()), &record);
+
         // Update owner's notarization history
         let mut history: Vec<BytesN<32>> = env
             .storage()
             .persistent()
             .get(&NotarizationKey::OwnerHistory(owner.clone()))
             .unwrap_or_else(|| Vec::new(env));
-        
+
         history.push_back(hash.clone());
-        env.storage().persistent().set(&NotarizationKey::OwnerHistory(owner), &history);
+        env.storage()
+            .persistent()
+            .set(&NotarizationKey::OwnerHistory(owner), &history);
 
         // Emit notarization event
         env.events().publish(
@@ -74,7 +82,9 @@ impl NotarizationManager {
 
     /// Verifies if a file hash has been notarized on-chain.
     pub fn verify(env: &Env, hash: BytesN<32>) -> Option<NotarizationRecord> {
-        env.storage().persistent().get(&NotarizationKey::Record(hash))
+        env.storage()
+            .persistent()
+            .get(&NotarizationKey::Record(hash))
     }
 
     /// Retrieves all notarization records for a specific address.
@@ -84,7 +94,7 @@ impl NotarizationManager {
             .persistent()
             .get(&NotarizationKey::OwnerHistory(owner))
             .unwrap_or_else(|| Vec::new(env));
-        
+
         let mut records = Vec::new(env);
         for hash in hashes.iter() {
             if let Some(record) = Self::verify(env, hash) {
@@ -95,7 +105,12 @@ impl NotarizationManager {
     }
 
     /// Bulk notarization helper.
-    pub fn bulk_notarize(env: &Env, owner: Address, hashes: Vec<BytesN<32>>, metadata: Vec<String>) {
+    pub fn bulk_notarize(
+        env: &Env,
+        owner: Address,
+        hashes: Vec<BytesN<32>>,
+        metadata: Vec<String>,
+    ) {
         owner.require_auth();
         for i in 0..hashes.len() {
             let hash = hashes.get(i).unwrap();

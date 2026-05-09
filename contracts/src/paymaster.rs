@@ -66,9 +66,10 @@ impl PaymasterContract {
             .instance()
             .get(&PaymasterKey::SponsorBalance(sponsor.clone()))
             .unwrap_or(0);
-        env.storage()
-            .instance()
-            .set(&PaymasterKey::SponsorBalance(sponsor.clone()), &(current + amount));
+        env.storage().instance().set(
+            &PaymasterKey::SponsorBalance(sponsor.clone()),
+            &(current + amount),
+        );
 
         env.events().publish(
             (symbol_short!("paymaster"), symbol_short!("deposit")),
@@ -103,10 +104,8 @@ impl PaymasterContract {
         env.storage()
             .instance()
             .set(&PaymasterKey::Allowlisted(wallet.clone()), &true);
-        env.events().publish(
-            (symbol_short!("paymaster"), symbol_short!("allow")),
-            wallet,
-        );
+        env.events()
+            .publish((symbol_short!("paymaster"), symbol_short!("allow")), wallet);
     }
 
     pub fn remove_allowlist(env: Env, caller: Address, wallet: Address) {
@@ -170,9 +169,10 @@ impl PaymasterContract {
             panic_with_error!(&env, PaymasterError::InsufficientDeposit);
         }
 
-        env.storage()
-            .instance()
-            .set(&PaymasterKey::SponsorBalance(sponsor.clone()), &(balance - gas_cost));
+        env.storage().instance().set(
+            &PaymasterKey::SponsorBalance(sponsor.clone()),
+            &(balance - gas_cost),
+        );
         env.storage().instance().set(
             &PaymasterKey::WalletDailyGas(wallet.clone(), day_bucket),
             &(wallet_today + gas_cost),

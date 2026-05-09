@@ -9,8 +9,8 @@
 #![no_std]
 
 use soroban_sdk::{
-    contract, contracterror, contractimpl, contracttype, panic_with_error,
-    Address, Bytes, BytesN, Env, String, Symbol, Vec, Map
+    contract, contracterror, contractimpl, contracttype, panic_with_error, Address, Bytes, BytesN,
+    Env, Map, String, Symbol, Vec,
 };
 
 /// Carbon credit token representing 1 ton CO2e reduction
@@ -255,14 +255,22 @@ impl CarbonCreditPlatform {
         };
 
         env.storage().instance().set(&DataKey::Config, &config);
-        env.storage().instance().set(&DataKey::TradingFeeBps, &DEFAULT_TRADING_FEE_BPS);
+        env.storage()
+            .instance()
+            .set(&DataKey::TradingFeeBps, &DEFAULT_TRADING_FEE_BPS);
         env.storage().instance().set(&DataKey::NextTokenId, &1u128);
-        env.storage().instance().set(&DataKey::NextProjectId, &1u128);
+        env.storage()
+            .instance()
+            .set(&DataKey::NextProjectId, &1u128);
         env.storage().instance().set(&DataKey::NextOrderId, &1u128);
-        env.storage().instance().set(&DataKey::NextCertificateId, &1u128);
+        env.storage()
+            .instance()
+            .set(&DataKey::NextCertificateId, &1u128);
 
         // Register admin as verifier
-        env.storage().instance().set(&DataKey::Verifier(admin.clone()), &true);
+        env.storage()
+            .instance()
+            .set(&DataKey::Verifier(admin.clone()), &true);
     }
 
     /// Register a new carbon project
@@ -305,7 +313,9 @@ impl CarbonCreditPlatform {
             metadata_uri,
         };
 
-        env.storage().instance().set(&DataKey::Project(project_id.clone()), &project);
+        env.storage()
+            .instance()
+            .set(&DataKey::Project(project_id.clone()), &project);
 
         // Emit project registration event
         env.events().publish(
@@ -338,7 +348,9 @@ impl CarbonCreditPlatform {
             panic_with_error!(&env, CarbonError::InvalidVintage);
         }
 
-        let mut project: CarbonProject = env.storage().instance()
+        let mut project: CarbonProject = env
+            .storage()
+            .instance()
             .get(&DataKey::Project(project_id.clone()))
             .unwrap_or_else(|| panic_with_error!(&env, CarbonError::ProjectNotFound));
 
@@ -373,8 +385,14 @@ impl CarbonCreditPlatform {
                 metadata_uri: metadata_uri.clone(),
             };
 
-            env.storage().persistent().set(&DataKey::Token(token_id), &credit);
-            env.storage().persistent().extend_ttl(&DataKey::Token(token_id), CREDIT_TTL_LEDGERS, CREDIT_TTL_LEDGERS);
+            env.storage()
+                .persistent()
+                .set(&DataKey::Token(token_id), &credit);
+            env.storage().persistent().extend_ttl(
+                &DataKey::Token(token_id),
+                CREDIT_TTL_LEDGERS,
+                CREDIT_TTL_LEDGERS,
+            );
 
             Self::add_user_credit(&env, &caller, token_id);
             token_ids.push_back(token_id);
@@ -382,7 +400,9 @@ impl CarbonCreditPlatform {
 
         // Update project issued credits
         project.credits_issued = project.credits_issued.saturating_add(amount);
-        env.storage().instance().set(&DataKey::Project(project_id.clone()), &project);
+        env.storage()
+            .instance()
+            .set(&DataKey::Project(project_id.clone()), &project);
 
         // Emit minting event
         env.events().publish(
@@ -412,7 +432,9 @@ impl CarbonCreditPlatform {
             panic_with_error!(&env, CarbonError::InvalidAmount);
         }
 
-        let mut credit: CarbonCredit = env.storage().persistent()
+        let mut credit: CarbonCredit = env
+            .storage()
+            .persistent()
             .get(&DataKey::Token(token_id))
             .unwrap_or_else(|| panic_with_error!(&env, CarbonError::TokenNotFound));
 
@@ -440,7 +462,9 @@ impl CarbonCreditPlatform {
             active: true,
         };
 
-        env.storage().instance().set(&DataKey::Order(order_id), &order);
+        env.storage()
+            .instance()
+            .set(&DataKey::Order(order_id), &order);
         Self::add_user_order(&env, &caller, order_id);
 
         // Emit order creation event
@@ -453,14 +477,12 @@ impl CarbonCreditPlatform {
     }
 
     /// Execute a trade by filling a sell order
-    pub fn execute_trade(
-        env: Env,
-        caller: Address,
-        order_id: u128,
-    ) {
+    pub fn execute_trade(env: Env, caller: Address, order_id: u128) {
         caller.require_auth();
 
-        let mut order: MarketplaceOrder = env.storage().instance()
+        let mut order: MarketplaceOrder = env
+            .storage()
+            .instance()
             .get(&DataKey::Order(order_id))
             .unwrap_or_else(|| panic_with_error!(&env, CarbonError::OrderNotFound));
 
@@ -476,7 +498,9 @@ impl CarbonCreditPlatform {
             panic_with_error!(&env, CarbonError::OrderFullyFilled);
         }
 
-        let mut credit: CarbonCredit = env.storage().persistent()
+        let mut credit: CarbonCredit = env
+            .storage()
+            .persistent()
             .get(&DataKey::Token(order.token_id))
             .unwrap_or_else(|| panic_with_error!(&env, CarbonError::TokenNotFound));
 
@@ -489,7 +513,9 @@ impl CarbonCreditPlatform {
         }
 
         // Calculate trading fee
-        let trading_fee_bps: u32 = env.storage().instance()
+        let trading_fee_bps: u32 = env
+            .storage()
+            .instance()
             .get(&DataKey::TradingFeeBps)
             .unwrap_or(DEFAULT_TRADING_FEE_BPS);
 
@@ -508,8 +534,12 @@ impl CarbonCreditPlatform {
         order.active = false;
 
         // Update storage
-        env.storage().persistent().set(&DataKey::Token(order.token_id), &credit);
-        env.storage().instance().set(&DataKey::Order(order_id), &order);
+        env.storage()
+            .persistent()
+            .set(&DataKey::Token(order.token_id), &credit);
+        env.storage()
+            .instance()
+            .set(&DataKey::Order(order_id), &order);
 
         // Update user credit lists
         Self::remove_user_credit(&env, &previous_owner, order.token_id);
@@ -518,17 +548,19 @@ impl CarbonCreditPlatform {
         // Emit trade execution event
         env.events().publish(
             (Symbol::new(&env, "trade_executed"),),
-            (order_id, previous_owner, caller, order.token_id, order.price, trading_fee),
+            (
+                order_id,
+                previous_owner,
+                caller,
+                order.token_id,
+                order.price,
+                trading_fee,
+            ),
         );
     }
 
     /// Retire carbon credits (permanent removal from circulation)
-    pub fn retire_credits(
-        env: Env,
-        caller: Address,
-        token_ids: Vec<u128>,
-        reason: String,
-    ) -> u128 {
+    pub fn retire_credits(env: Env, caller: Address, token_ids: Vec<u128>, reason: String) -> u128 {
         caller.require_auth();
 
         Self::validate_string_length(&env, &reason);
@@ -543,7 +575,9 @@ impl CarbonCreditPlatform {
 
         // Verify and retire each token
         for token_id in token_ids.iter() {
-            let mut credit: CarbonCredit = env.storage().persistent()
+            let mut credit: CarbonCredit = env
+                .storage()
+                .persistent()
                 .get(&DataKey::Token(token_id))
                 .unwrap_or_else(|| panic_with_error!(&env, CarbonError::TokenNotFound));
 
@@ -560,7 +594,9 @@ impl CarbonCreditPlatform {
             credit.retirement_timestamp = Some(current_time);
             credit.retirement_reason = Some(reason.clone());
 
-            env.storage().persistent().set(&DataKey::Token(token_id), &credit);
+            env.storage()
+                .persistent()
+                .set(&DataKey::Token(token_id), &credit);
 
             total_tonnes = total_tonnes.saturating_add(credit.amount);
             retired_tokens.push_back(token_id);
@@ -578,10 +614,15 @@ impl CarbonCreditPlatform {
             reason: reason.clone(),
             total_tonnes,
             timestamp: current_time,
-            certificate_uri: String::from_str(&env, "https://api.carbon-credits.io/certificates/id"),
+            certificate_uri: String::from_str(
+                &env,
+                "https://api.carbon-credits.io/certificates/id",
+            ),
         };
 
-        env.storage().instance().set(&DataKey::Certificate(certificate_id), &certificate);
+        env.storage()
+            .instance()
+            .set(&DataKey::Certificate(certificate_id), &certificate);
         Self::add_user_certificate(&env, &caller, certificate_id);
 
         // Emit retirement event
@@ -595,109 +636,139 @@ impl CarbonCreditPlatform {
 
     /// Get carbon credit details
     pub fn get_credit(env: Env, token_id: u128) -> CarbonCredit {
-        env.storage().persistent()
+        env.storage()
+            .persistent()
             .get(&DataKey::Token(token_id))
             .unwrap_or_else(|| panic_with_error!(&env, CarbonError::TokenNotFound))
     }
 
     /// Get project details
     pub fn get_project(env: Env, project_id: Symbol) -> CarbonProject {
-        env.storage().instance()
+        env.storage()
+            .instance()
             .get(&DataKey::Project(project_id))
             .unwrap_or_else(|| panic_with_error!(&env, CarbonError::ProjectNotFound))
     }
 
     /// Get order details
     pub fn get_order(env: Env, order_id: u128) -> MarketplaceOrder {
-        env.storage().instance()
+        env.storage()
+            .instance()
             .get(&DataKey::Order(order_id))
             .unwrap_or_else(|| panic_with_error!(&env, CarbonError::OrderNotFound))
     }
 
     /// Get retirement certificate
     pub fn get_certificate(env: Env, certificate_id: u128) -> RetirementCertificate {
-        env.storage().instance()
+        env.storage()
+            .instance()
             .get(&DataKey::Certificate(certificate_id))
             .unwrap_or_else(|| panic_with_error!(&env, CarbonError::CertificateNotFound))
     }
 
     /// Get all credits owned by a user
     pub fn get_user_credits(env: Env, user: Address) -> Vec<u128> {
-        env.storage().instance()
+        env.storage()
+            .instance()
             .get(&DataKey::UserCredits(user))
             .unwrap_or_else(|| Vec::new(&env))
     }
 
     /// Get all orders created by a user
     pub fn get_user_orders(env: Env, user: Address) -> Vec<u128> {
-        env.storage().instance()
+        env.storage()
+            .instance()
             .get(&DataKey::UserOrders(user))
             .unwrap_or_else(|| Vec::new(&env))
     }
 
     /// Get all retirement certificates for a user
     pub fn get_user_certificates(env: Env, user: Address) -> Vec<u128> {
-        env.storage().instance()
+        env.storage()
+            .instance()
             .get(&DataKey::UserCertificates(user))
             .unwrap_or_else(|| Vec::new(&env))
     }
 
     /// Get platform configuration
     pub fn get_config(env: &Env) -> PlatformConfig {
-        env.storage().instance()
+        env.storage()
+            .instance()
             .get(&DataKey::Config)
             .unwrap_or_else(|| panic_with_error!(env, CarbonError::NotInitialized))
     }
 
     /// Helper function to generate next token ID
     fn generate_token_id(env: &Env) -> u128 {
-        let id: u128 = env.storage().instance()
+        let id: u128 = env
+            .storage()
+            .instance()
             .get(&DataKey::NextTokenId)
             .unwrap_or(1);
-        env.storage().instance().set(&DataKey::NextTokenId, &(id + 1));
+        env.storage()
+            .instance()
+            .set(&DataKey::NextTokenId, &(id + 1));
         id
     }
 
     /// Helper function to generate next project ID
     fn generate_project_id(env: &Env) -> Symbol {
-        let id: u128 = env.storage().instance()
+        let id: u128 = env
+            .storage()
+            .instance()
             .get(&DataKey::NextProjectId)
             .unwrap_or(1);
-        env.storage().instance().set(&DataKey::NextProjectId, &(id + 1));
+        env.storage()
+            .instance()
+            .set(&DataKey::NextProjectId, &(id + 1));
         Symbol::new(env, "PROJ_ID")
     }
 
     /// Helper function to generate next order ID
     fn generate_order_id(env: &Env) -> u128 {
-        let id: u128 = env.storage().instance()
+        let id: u128 = env
+            .storage()
+            .instance()
             .get(&DataKey::NextOrderId)
             .unwrap_or(1);
-        env.storage().instance().set(&DataKey::NextOrderId, &(id + 1));
+        env.storage()
+            .instance()
+            .set(&DataKey::NextOrderId, &(id + 1));
         id
     }
 
     /// Helper function to generate next certificate ID
     fn generate_certificate_id(env: &Env) -> u128 {
-        let id: u128 = env.storage().instance()
+        let id: u128 = env
+            .storage()
+            .instance()
             .get(&DataKey::NextCertificateId)
             .unwrap_or(1);
-        env.storage().instance().set(&DataKey::NextCertificateId, &(id + 1));
+        env.storage()
+            .instance()
+            .set(&DataKey::NextCertificateId, &(id + 1));
         id
     }
 
     /// Helper function to add credit to user's list
     fn add_user_credit(env: &Env, user: &Address, token_id: u128) {
-        let mut credits: Vec<u128> = env.storage().instance()
+        let mut credits: Vec<u128> = env
+            .storage()
+            .instance()
             .get(&DataKey::UserCredits(user.clone()))
             .unwrap_or_else(|| Vec::new(env));
 
         credits.push_back(token_id);
-        env.storage().instance().set(&DataKey::UserCredits(user.clone()), &credits);
+        env.storage()
+            .instance()
+            .set(&DataKey::UserCredits(user.clone()), &credits);
     }
 
     /// Helper function to remove credit from user's list
     fn remove_user_credit(env: &Env, user: &Address, token_id: u128) {
-        let mut credits: Vec<u128> = env.storage().instance()
+        let mut credits: Vec<u128> = env
+            .storage()
+            .instance()
             .get(&DataKey::UserCredits(user.clone()))
             .unwrap_or_else(|| Vec::new(env));
 
@@ -711,28 +782,38 @@ impl CarbonCreditPlatform {
         }
 
         if found {
-            env.storage().instance().set(&DataKey::UserCredits(user.clone()), &credits);
+            env.storage()
+                .instance()
+                .set(&DataKey::UserCredits(user.clone()), &credits);
         }
     }
 
     /// Helper function to add order to user's list
     fn add_user_order(env: &Env, user: &Address, order_id: u128) {
-        let mut orders: Vec<u128> = env.storage().instance()
+        let mut orders: Vec<u128> = env
+            .storage()
+            .instance()
             .get(&DataKey::UserOrders(user.clone()))
             .unwrap_or_else(|| Vec::new(env));
 
         orders.push_back(order_id);
-        env.storage().instance().set(&DataKey::UserOrders(user.clone()), &orders);
+        env.storage()
+            .instance()
+            .set(&DataKey::UserOrders(user.clone()), &orders);
     }
 
     /// Helper function to add certificate to user's list
     fn add_user_certificate(env: &Env, user: &Address, certificate_id: u128) {
-        let mut certificates: Vec<u128> = env.storage().instance()
+        let mut certificates: Vec<u128> = env
+            .storage()
+            .instance()
             .get(&DataKey::UserCertificates(user.clone()))
             .unwrap_or_else(|| Vec::new(env));
 
         certificates.push_back(certificate_id);
-        env.storage().instance().set(&DataKey::UserCertificates(user.clone()), &certificates);
+        env.storage()
+            .instance()
+            .set(&DataKey::UserCertificates(user.clone()), &certificates);
     }
 
     /// Helper function to validate string length

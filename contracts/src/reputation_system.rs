@@ -197,8 +197,11 @@ impl ReputationContract {
 
         // Attester's own score influences attestation weight (capped at 2×)
         let attester_record = Self::load_or_default(&env, &attester, current_ledger);
-        let attester_score =
-            effective_score(attester_record.raw_score, attester_record.last_update_ledger, current_ledger);
+        let attester_score = effective_score(
+            attester_record.raw_score,
+            attester_record.last_update_ledger,
+            current_ledger,
+        );
         // weight = base + min(attester_score / 1000, base)  (capped at 2× base)
         let bonus = (attester_score / 1_000).min(ATTESTATION_BASE_WEIGHT);
         let weight = ATTESTATION_BASE_WEIGHT + bonus;
@@ -214,8 +217,11 @@ impl ReputationContract {
 
         // Apply weight to subject's score
         let mut subject_record = Self::load_or_default(&env, &subject, current_ledger);
-        subject_record.raw_score =
-            effective_score(subject_record.raw_score, subject_record.last_update_ledger, current_ledger);
+        subject_record.raw_score = effective_score(
+            subject_record.raw_score,
+            subject_record.last_update_ledger,
+            current_ledger,
+        );
         subject_record.raw_score = subject_record.raw_score.saturating_add(weight);
         subject_record.last_update_ledger = current_ledger;
         subject_record.attestation_count += 1;

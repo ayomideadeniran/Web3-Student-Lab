@@ -1375,7 +1375,7 @@ fn get_event_version_returns_one() {
 #[test]
 fn notarizes_and_verifies_file_successfully() {
     let (env, owner, _, _, client) = setup();
-    
+
     env.ledger().with_mut(|ledger| {
         ledger.timestamp = 2_000_000;
         ledger.sequence_number = 100;
@@ -1418,7 +1418,7 @@ fn notarization_is_immutable_first_timestamp_wins() {
 #[test]
 fn retrieves_owner_notarization_history() {
     let (env, owner, _, _, client) = setup();
-    
+
     let hash1 = BytesN::from_array(&env, &[10u8; 32]);
     let hash2 = BytesN::from_array(&env, &[11u8; 32]);
     let metadata = String::from_str(&env, "Batch");

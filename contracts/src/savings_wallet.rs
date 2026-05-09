@@ -1,4 +1,6 @@
-use soroban_sdk::{contract, contractimpl, contracttype, contracterror, Address, Env, Vec, panic_with_error};
+use soroban_sdk::{
+    contract, contracterror, contractimpl, contracttype, panic_with_error, Address, Env, Vec,
+};
 
 #[contracttype]
 #[derive(Clone, Debug)]
@@ -45,15 +47,25 @@ pub struct SavingsWalletContract;
 #[contractimpl]
 impl SavingsWalletContract {
     pub fn initialize(env: Env, penalty_rate: u32) {
-        if env.storage().instance().has(&SavingsDataKey::EarlyWithdrawalPenalty) {
+        if env
+            .storage()
+            .instance()
+            .has(&SavingsDataKey::EarlyWithdrawalPenalty)
+        {
             return;
         }
-        
-        env.storage().instance().set(&SavingsDataKey::EarlyWithdrawalPenalty, &penalty_rate);
-        env.storage().instance().set(&SavingsDataKey::NextAccountId, &0u64);
-        
+
+        env.storage()
+            .instance()
+            .set(&SavingsDataKey::EarlyWithdrawalPenalty, &penalty_rate);
+        env.storage()
+            .instance()
+            .set(&SavingsDataKey::NextAccountId, &0u64);
+
         let empty_list: Vec<Address> = Vec::new(&env);
-        env.storage().instance().set(&SavingsDataKey::AccountList, &empty_list);
+        env.storage()
+            .instance()
+            .set(&SavingsDataKey::AccountList, &empty_list);
     }
 
     pub fn create_savings(
@@ -77,7 +89,11 @@ impl SavingsWalletContract {
             panic_with_error!(&env, SavingsError::InvalidInterestRate);
         }
 
-        if env.storage().instance().has(&SavingsDataKey::Account(owner.clone())) {
+        if env
+            .storage()
+            .instance()
+            .has(&SavingsDataKey::Account(owner.clone()))
+        {
             panic_with_error!(&env, SavingsError::AlreadyExists);
         }
 
@@ -95,7 +111,9 @@ impl SavingsWalletContract {
             total_interest_earned: 0,
         };
 
-        env.storage().instance().set(&SavingsDataKey::Account(owner.clone()), &account);
+        env.storage()
+            .instance()
+            .set(&SavingsDataKey::Account(owner.clone()), &account);
 
         let mut account_list: Vec<Address> = env
             .storage()
@@ -103,7 +121,9 @@ impl SavingsWalletContract {
             .get(&SavingsDataKey::AccountList)
             .unwrap_or_else(|| Vec::new(&env));
         account_list.push_back(owner.clone());
-        env.storage().instance().set(&SavingsDataKey::AccountList, &account_list);
+        env.storage()
+            .instance()
+            .set(&SavingsDataKey::AccountList, &account_list);
 
         env.events().publish(
             (soroban_sdk::symbol_short!("sav_creat"),),
@@ -127,7 +147,9 @@ impl SavingsWalletContract {
             .unwrap_or_else(|| panic_with_error!(&env, SavingsError::AccountNotFound));
 
         account.balance = account.balance.saturating_add(amount);
-        env.storage().instance().set(&SavingsDataKey::Account(owner.clone()), &account);
+        env.storage()
+            .instance()
+            .set(&SavingsDataKey::Account(owner.clone()), &account);
 
         env.events().publish(
             (soroban_sdk::symbol_short!("deposited"),),
@@ -160,7 +182,9 @@ impl SavingsWalletContract {
         }
 
         account.balance = account.balance.saturating_sub(amount);
-        env.storage().instance().set(&SavingsDataKey::Account(owner.clone()), &account);
+        env.storage()
+            .instance()
+            .set(&SavingsDataKey::Account(owner.clone()), &account);
 
         env.events().publish(
             (soroban_sdk::symbol_short!("withdrawn"),),
@@ -201,7 +225,9 @@ impl SavingsWalletContract {
         let net_amount = amount.saturating_sub(penalty);
 
         account.balance = account.balance.saturating_sub(amount);
-        env.storage().instance().set(&SavingsDataKey::Account(owner.clone()), &account);
+        env.storage()
+            .instance()
+            .set(&SavingsDataKey::Account(owner.clone()), &account);
 
         env.events().publish(
             (soroban_sdk::symbol_short!("early_wd"),),
@@ -212,7 +238,9 @@ impl SavingsWalletContract {
     }
 
     pub fn get_account(env: Env, owner: Address) -> Option<SavingsAccount> {
-        env.storage().instance().get(&SavingsDataKey::Account(owner))
+        env.storage()
+            .instance()
+            .get(&SavingsDataKey::Account(owner))
     }
 
     pub fn get_all_accounts(env: Env) -> Vec<Address> {
@@ -231,16 +259,16 @@ impl SavingsWalletContract {
 
     pub fn set_penalty_rate(env: Env, caller: Address, new_rate: u32) {
         caller.require_auth();
-        
+
         if new_rate > BASIS_POINTS {
             panic_with_error!(&env, SavingsError::InvalidInterestRate);
         }
 
-        env.storage().instance().set(&SavingsDataKey::EarlyWithdrawalPenalty, &new_rate);
+        env.storage()
+            .instance()
+            .set(&SavingsDataKey::EarlyWithdrawalPenalty, &new_rate);
 
-        env.events().publish(
-            (soroban_sdk::symbol_short!("pen_upd"),),
-            (caller, new_rate),
-        );
+        env.events()
+            .publish((soroban_sdk::symbol_short!("pen_upd"),), (caller, new_rate));
     }
 }

@@ -111,11 +111,7 @@ pub fn best_single_pool(pools: &[PoolSnapshot], amount_in: u128) -> Option<usize
 /// updated reserves). Pools with negative net contribution are excluded.
 ///
 /// `pools` slice must have at most 8 entries (hard cap for on-chain safety).
-pub fn optimal_split(
-    pools: &[PoolSnapshot],
-    amount_in: u128,
-    max_splits: usize,
-) -> RouteResult {
+pub fn optimal_split(pools: &[PoolSnapshot], amount_in: u128, max_splits: usize) -> RouteResult {
     assert!(pools.len() <= 8, "max 8 pools");
     let n = pools.len().min(max_splits).min(8);
     if n == 0 || amount_in == 0 {
@@ -161,7 +157,11 @@ pub fn optimal_split(
         // Pick pool with best marginal spot price on current reserves
         let best = (0..n)
             .max_by_key(|&i| {
-                if reserves_in[i] == 0 { 0 } else { reserves_out[i] * PRECISION / reserves_in[i] }
+                if reserves_in[i] == 0 {
+                    0
+                } else {
+                    reserves_out[i] * PRECISION / reserves_in[i]
+                }
             })
             .unwrap_or(0);
 
@@ -183,7 +183,11 @@ pub fn optimal_split(
     if remainder > 0 {
         let best = (0..n)
             .max_by_key(|&i| {
-                if reserves_in[i] == 0 { 0 } else { reserves_out[i] * PRECISION / reserves_in[i] }
+                if reserves_in[i] == 0 {
+                    0
+                } else {
+                    reserves_out[i] * PRECISION / reserves_in[i]
+                }
             })
             .unwrap_or(0);
         let fee_factor = BPS - pools[best].fee_bps;
@@ -216,17 +220,13 @@ pub fn optimal_split(
 /// Net price improvement of split route vs best single pool (in basis points).
 ///
 /// Returns 0 if split is not better.
-pub fn price_improvement_bps(
-    pools: &[PoolSnapshot],
-    amount_in: u128,
-    max_splits: usize,
-) -> u128 {
+pub fn price_improvement_bps(pools: &[PoolSnapshot], amount_in: u128, max_splits: usize) -> u128 {
     let single_idx = match best_single_pool(pools, amount_in) {
         Some(i) => i,
         None => return 0,
     };
-    let single_net = amm_out(&pools[single_idx], amount_in)
-        .saturating_sub(pools[single_idx].gas_cost);
+    let single_net =
+        amm_out(&pools[single_idx], amount_in).saturating_sub(pools[single_idx].gas_cost);
 
     let split = optimal_split(pools, amount_in, max_splits);
     if split.net_out <= single_net || single_net == 0 {
@@ -244,7 +244,13 @@ mod tests {
     use super::*;
 
     fn pool(id: u32, r_in: u128, r_out: u128, fee: u128, gas: u128) -> PoolSnapshot {
-        PoolSnapshot { pool_id: id, reserve_in: r_in, reserve_out: r_out, fee_bps: fee, gas_cost: gas }
+        PoolSnapshot {
+            pool_id: id,
+            reserve_in: r_in,
+            reserve_out: r_out,
+            fee_bps: fee,
+            gas_cost: gas,
+        }
     }
 
     #[test]

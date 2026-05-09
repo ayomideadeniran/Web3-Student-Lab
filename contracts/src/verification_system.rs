@@ -6,12 +6,12 @@
 #![no_std]
 
 use soroban_sdk::{
-    contract, contracterror, contractimpl, contracttype, panic_with_error,
-    Address, Bytes, BytesN, Env, String, Symbol, Vec, Map
+    contract, contracterror, contractimpl, contracttype, panic_with_error, Address, Bytes, BytesN,
+    Env, Map, String, Symbol, Vec,
 };
 
 use crate::carbon_credit_platform::{
-    CarbonProject, CarbonCredit, ProjectStatus, VerificationStatus
+    CarbonCredit, CarbonProject, ProjectStatus, VerificationStatus,
 };
 
 /// Verifier information and credentials
@@ -300,10 +300,19 @@ impl VerificationSystem {
             annual_verification_docs: Self::get_default_annual_docs(&env),
         };
 
-        env.storage().instance().set(&VerificationDataKey::Config, &config);
-        env.storage().instance().set(&VerificationDataKey::NextRequestId, &1u128);
-        env.storage().instance().set(&VerificationDataKey::NextReportId, &1u128);
-        env.storage().instance().set(&VerificationDataKey::PendingRequests, &Vec::<u128>::new(&env));
+        env.storage()
+            .instance()
+            .set(&VerificationDataKey::Config, &config);
+        env.storage()
+            .instance()
+            .set(&VerificationDataKey::NextRequestId, &1u128);
+        env.storage()
+            .instance()
+            .set(&VerificationDataKey::NextReportId, &1u128);
+        env.storage().instance().set(
+            &VerificationDataKey::PendingRequests,
+            &Vec::<u128>::new(&env),
+        );
     }
 
     /// Register as a verifier
@@ -338,7 +347,10 @@ impl VerificationSystem {
             metadata_uri,
         };
 
-        env.storage().instance().set(&VerificationDataKey::VerifierProfile(caller.clone()), &profile);
+        env.storage().instance().set(
+            &VerificationDataKey::VerifierProfile(caller.clone()),
+            &profile,
+        );
 
         // Emit verifier registration event
         env.events().publish(
@@ -356,7 +368,9 @@ impl VerificationSystem {
             panic_with_error!(&env, VerificationError::Unauthorized);
         }
 
-        let mut profile: VerifierProfile = env.storage().instance()
+        let mut profile: VerifierProfile = env
+            .storage()
+            .instance()
             .get(&VerificationDataKey::VerifierProfile(verifier.clone()))
             .unwrap_or_else(|| panic_with_error!(&env, VerificationError::VerifierNotFound));
 
@@ -365,7 +379,10 @@ impl VerificationSystem {
         }
 
         profile.status = VerifierStatus::Approved;
-        env.storage().instance().set(&VerificationDataKey::VerifierProfile(verifier.clone()), &profile);
+        env.storage().instance().set(
+            &VerificationDataKey::VerifierProfile(verifier.clone()),
+            &profile,
+        );
 
         // Emit verifier approval event
         env.events().publish(
@@ -412,14 +429,19 @@ impl VerificationSystem {
             status: VerificationRequestStatus::Pending,
             created_at: current_time,
             updated_at: current_time,
-            expected_completion: Some(current_time.saturating_add(config.standard_verification_period)),
+            expected_completion: Some(
+                current_time.saturating_add(config.standard_verification_period),
+            ),
             fee,
             notes,
             required_documents: required_docs.clone(),
             submitted_documents: Vec::new(&env),
         };
 
-        env.storage().instance().set(&VerificationDataKey::VerificationRequest(request_id), &request);
+        env.storage().instance().set(
+            &VerificationDataKey::VerificationRequest(request_id),
+            &request,
+        );
 
         // Add to project verification history
         Self::add_project_verification(&env, &project_id, request_id);
@@ -445,7 +467,9 @@ impl VerificationSystem {
             panic_with_error!(&env, VerificationError::Unauthorized);
         }
 
-        let mut request: VerificationRequest = env.storage().instance()
+        let mut request: VerificationRequest = env
+            .storage()
+            .instance()
             .get(&VerificationDataKey::VerificationRequest(request_id))
             .unwrap_or_else(|| panic_with_error!(&env, VerificationError::RequestNotFound));
 
@@ -457,7 +481,9 @@ impl VerificationSystem {
             panic_with_error!(&env, VerificationError::RequestAlreadyAssigned);
         }
 
-        let verifier_profile: VerifierProfile = env.storage().instance()
+        let verifier_profile: VerifierProfile = env
+            .storage()
+            .instance()
             .get(&VerificationDataKey::VerifierProfile(verifier.clone()))
             .unwrap_or_else(|| panic_with_error!(&env, VerificationError::VerifierNotFound));
 
@@ -473,7 +499,10 @@ impl VerificationSystem {
         request.status = VerificationRequestStatus::Assigned;
         request.updated_at = env.ledger().timestamp();
 
-        env.storage().instance().set(&VerificationDataKey::VerificationRequest(request_id), &request);
+        env.storage().instance().set(
+            &VerificationDataKey::VerificationRequest(request_id),
+            &request,
+        );
 
         // Remove from pending requests
         Self::remove_pending_request(&env, request_id);
@@ -504,7 +533,9 @@ impl VerificationSystem {
 
         Self::validate_string_length(&env, &report_uri);
 
-        let request: VerificationRequest = env.storage().instance()
+        let request: VerificationRequest = env
+            .storage()
+            .instance()
             .get(&VerificationDataKey::VerificationRequest(request_id))
             .unwrap_or_else(|| panic_with_error!(&env, VerificationError::RequestNotFound));
 
@@ -512,8 +543,9 @@ impl VerificationSystem {
             panic_with_error!(&env, VerificationError::Unauthorized);
         }
 
-        if request.status != VerificationRequestStatus::Assigned &&
-           request.status != VerificationRequestStatus::InProgress {
+        if request.status != VerificationRequestStatus::Assigned
+            && request.status != VerificationRequestStatus::InProgress
+        {
             panic_with_error!(&env, VerificationError::InvalidRequestStatus);
         }
 
@@ -539,13 +571,18 @@ impl VerificationSystem {
             report_uri: String::from_str(&env, "https://api.carbon-credits.io/reports/id"),
         };
 
-        env.storage().instance().set(&VerificationDataKey::VerificationReport(report_id), &report);
+        env.storage()
+            .instance()
+            .set(&VerificationDataKey::VerificationReport(report_id), &report);
 
         // Update request status
         let mut updated_request = request;
         updated_request.status = VerificationRequestStatus::Submitted;
         updated_request.updated_at = current_time;
-        env.storage().instance().set(&VerificationDataKey::VerificationRequest(request_id), &updated_request);
+        env.storage().instance().set(
+            &VerificationDataKey::VerificationRequest(request_id),
+            &updated_request,
+        );
 
         // Update verifier stats
         Self::update_verifier_stats(&env, &caller, true);
@@ -566,11 +603,15 @@ impl VerificationSystem {
             panic_with_error!(&env, VerificationError::Unauthorized);
         }
 
-        let report: VerificationReport = env.storage().instance()
+        let report: VerificationReport = env
+            .storage()
+            .instance()
             .get(&VerificationDataKey::VerificationReport(report_id))
             .unwrap_or_else(|| panic_with_error!(&env, VerificationError::ReportNotFound));
 
-        let mut request: VerificationRequest = env.storage().instance()
+        let mut request: VerificationRequest = env
+            .storage()
+            .instance()
             .get(&VerificationDataKey::VerificationRequest(report.request_id))
             .unwrap_or_else(|| panic_with_error!(&env, VerificationError::RequestNotFound));
 
@@ -582,13 +623,16 @@ impl VerificationSystem {
         request.status = match report.outcome {
             VerificationOutcome::Approved | VerificationOutcome::ApprovedWithConditions => {
                 VerificationRequestStatus::Approved
-            },
+            }
             VerificationOutcome::Rejected => VerificationRequestStatus::Rejected,
             VerificationOutcome::RequiresMoreInformation => VerificationRequestStatus::Pending,
         };
 
         request.updated_at = env.ledger().timestamp();
-        env.storage().instance().set(&VerificationDataKey::VerificationRequest(report.request_id), &request);
+        env.storage().instance().set(
+            &VerificationDataKey::VerificationRequest(report.request_id),
+            &request,
+        );
 
         // Emit report approval event
         env.events().publish(
@@ -599,96 +643,129 @@ impl VerificationSystem {
 
     /// Get verifier profile
     pub fn get_verifier(env: Env, verifier: Address) -> VerifierProfile {
-        env.storage().instance()
+        env.storage()
+            .instance()
             .get(&VerificationDataKey::VerifierProfile(verifier))
             .unwrap_or_else(|| panic_with_error!(&env, VerificationError::VerifierNotFound))
     }
 
     /// Get verification request
     pub fn get_verification_request(env: Env, request_id: u128) -> VerificationRequest {
-        env.storage().instance()
+        env.storage()
+            .instance()
             .get(&VerificationDataKey::VerificationRequest(request_id))
             .unwrap_or_else(|| panic_with_error!(&env, VerificationError::RequestNotFound))
     }
 
     /// Get verification report
     pub fn get_verification_report(env: Env, report_id: u128) -> VerificationReport {
-        env.storage().instance()
+        env.storage()
+            .instance()
             .get(&VerificationDataKey::VerificationReport(report_id))
             .unwrap_or_else(|| panic_with_error!(&env, VerificationError::ReportNotFound))
     }
 
     /// Get pending verification requests
     pub fn get_pending_requests(env: Env) -> Vec<u128> {
-        env.storage().instance()
+        env.storage()
+            .instance()
             .get(&VerificationDataKey::PendingRequests)
             .unwrap_or_else(|| Vec::new(&env))
     }
 
     /// Get verifier's assigned requests
     pub fn get_verifier_requests(env: Env, verifier: Address) -> Vec<u128> {
-        env.storage().instance()
+        env.storage()
+            .instance()
             .get(&VerificationDataKey::VerifierRequests(verifier))
             .unwrap_or_else(|| Vec::new(&env))
     }
 
     /// Get project's verification history
     pub fn get_project_verification_history(env: Env, project_id: Symbol) -> Vec<u128> {
-        env.storage().instance()
+        env.storage()
+            .instance()
             .get(&VerificationDataKey::ProjectVerificationHistory(project_id))
             .unwrap_or_else(|| Vec::new(&env))
     }
 
     /// Get verification system configuration
     pub fn get_config(env: &Env) -> VerificationConfig {
-        env.storage().instance()
+        env.storage()
+            .instance()
             .get(&VerificationDataKey::Config)
             .unwrap_or_else(|| panic_with_error!(env, VerificationError::NotInitialized))
     }
 
     /// Helper functions
     fn generate_request_id(env: &Env) -> u128 {
-        let id: u128 = env.storage().instance()
+        let id: u128 = env
+            .storage()
+            .instance()
             .get(&VerificationDataKey::NextRequestId)
             .unwrap_or(1);
-        env.storage().instance().set(&VerificationDataKey::NextRequestId, &(id + 1));
+        env.storage()
+            .instance()
+            .set(&VerificationDataKey::NextRequestId, &(id + 1));
         id
     }
 
     fn generate_report_id(env: &Env) -> u128 {
-        let id: u128 = env.storage().instance()
+        let id: u128 = env
+            .storage()
+            .instance()
             .get(&VerificationDataKey::NextReportId)
             .unwrap_or(1);
-        env.storage().instance().set(&VerificationDataKey::NextReportId, &(id + 1));
+        env.storage()
+            .instance()
+            .set(&VerificationDataKey::NextReportId, &(id + 1));
         id
     }
 
     fn add_project_verification(env: &Env, project_id: &Symbol, request_id: u128) {
-        let mut history: Vec<u128> = env.storage().instance()
-            .get(&VerificationDataKey::ProjectVerificationHistory(project_id.clone()))
+        let mut history: Vec<u128> = env
+            .storage()
+            .instance()
+            .get(&VerificationDataKey::ProjectVerificationHistory(
+                project_id.clone(),
+            ))
             .unwrap_or_else(|| Vec::new(env));
         history.push_back(request_id);
-        env.storage().instance().set(&VerificationDataKey::ProjectVerificationHistory(project_id.clone()), &history);
+        env.storage().instance().set(
+            &VerificationDataKey::ProjectVerificationHistory(project_id.clone()),
+            &history,
+        );
     }
 
     fn add_verifier_request(env: &Env, verifier: &Address, request_id: u128) {
-        let mut requests: Vec<u128> = env.storage().instance()
+        let mut requests: Vec<u128> = env
+            .storage()
+            .instance()
             .get(&VerificationDataKey::VerifierRequests(verifier.clone()))
             .unwrap_or_else(|| Vec::new(env));
         requests.push_back(request_id);
-        env.storage().instance().set(&VerificationDataKey::VerifierRequests(verifier.clone()), &requests);
+        env.storage().instance().set(
+            &VerificationDataKey::VerifierRequests(verifier.clone()),
+            &requests,
+        );
     }
 
     fn add_pending_request(env: &Env, request_id: u128) {
-        let mut pending: Vec<u128> = env.storage().instance()
+        let mut pending: Vec<u128> = env
+            .storage()
+            .instance()
             .get(&VerificationDataKey::PendingRequests)
             .unwrap_or_else(|| Vec::new(env));
         pending.push_back(request_id);
-        env.storage().instance().set(&VerificationDataKey::PendingRequests, &pending);
+        env.storage()
+            .instance()
+            .set(&VerificationDataKey::PendingRequests, &pending);
     }
 
     fn remove_pending_request(env: &Env, request_id: u128) {
-        let mut pending: Vec<u128> = env.storage().instance()
+        let mut pending: Vec<u128> = env
+            .storage()
+            .instance()
             .get(&VerificationDataKey::PendingRequests)
             .unwrap_or_else(|| Vec::new(env));
 
@@ -699,11 +776,15 @@ impl VerificationSystem {
             }
         }
 
-        env.storage().instance().set(&VerificationDataKey::PendingRequests, &pending);
+        env.storage()
+            .instance()
+            .set(&VerificationDataKey::PendingRequests, &pending);
     }
 
     fn update_verifier_stats(env: &Env, verifier: &Address, successful: bool) {
-        let mut profile: VerifierProfile = env.storage().instance()
+        let mut profile: VerifierProfile = env
+            .storage()
+            .instance()
             .get(&VerificationDataKey::VerifierProfile(verifier.clone()))
             .unwrap_or_else(|| panic_with_error!(env, VerificationError::VerifierNotFound));
 
@@ -717,7 +798,10 @@ impl VerificationSystem {
             profile.rating = profile.rating.saturating_sub(5);
         }
 
-        env.storage().instance().set(&VerificationDataKey::VerifierProfile(verifier.clone()), &profile);
+        env.storage().instance().set(
+            &VerificationDataKey::VerifierProfile(verifier.clone()),
+            &profile,
+        );
     }
 
     fn validate_string_length(env: &Env, string: &String) {

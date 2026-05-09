@@ -3,9 +3,7 @@
 //! Maintains aggregated statistics for the contract and per-course analytics.
 //! All statistics are tracked on-chain and can be queried for analytics dashboards.
 
-use soroban_sdk::{
-    contracttype, Address, BytesN, Env,
-};
+use soroban_sdk::{contracttype, Address, BytesN, Env};
 
 use crate::activity_log::ActivityLogManager;
 
@@ -63,19 +61,43 @@ impl<'a> StatisticsManager<'a> {
 
     /// Get current contract statistics.
     pub fn get_statistics(&self) -> ContractStatistics {
-        let total_minted: u64 = self.env.storage().instance()
-            .get(&StatsKey::TotalMinted).unwrap_or(0);
-        let total_revoked: u64 = self.env.storage().instance()
-            .get(&StatsKey::TotalRevoked).unwrap_or(0);
-        let total_verified: u64 = self.env.storage().instance()
-            .get(&StatsKey::TotalVerified).unwrap_or(0);
-        let total_renewed: u64 = self.env.storage().instance()
-            .get(&StatsKey::TotalRenewed).unwrap_or(0);
-        let total_transferred: u64 = self.env.storage().instance()
-            .get(&StatsKey::TotalTransferred).unwrap_or(0);
+        let total_minted: u64 = self
+            .env
+            .storage()
+            .instance()
+            .get(&StatsKey::TotalMinted)
+            .unwrap_or(0);
+        let total_revoked: u64 = self
+            .env
+            .storage()
+            .instance()
+            .get(&StatsKey::TotalRevoked)
+            .unwrap_or(0);
+        let total_verified: u64 = self
+            .env
+            .storage()
+            .instance()
+            .get(&StatsKey::TotalVerified)
+            .unwrap_or(0);
+        let total_renewed: u64 = self
+            .env
+            .storage()
+            .instance()
+            .get(&StatsKey::TotalRenewed)
+            .unwrap_or(0);
+        let total_transferred: u64 = self
+            .env
+            .storage()
+            .instance()
+            .get(&StatsKey::TotalTransferred)
+            .unwrap_or(0);
 
-        let unique_holders: u64 = self.env.storage().instance()
-            .get(&StatsKey::UniqueHolders).unwrap_or(0);
+        let unique_holders: u64 = self
+            .env
+            .storage()
+            .instance()
+            .get(&StatsKey::UniqueHolders)
+            .unwrap_or(0);
 
         // Active certificates = total minted - total revoked
         let active_certificates = total_minted.saturating_sub(total_revoked);
@@ -97,9 +119,15 @@ impl<'a> StatisticsManager<'a> {
     /// Increment total minted counter and update holder tracking.
     pub fn increment_minted(&self, token_id: u128, recipient: &Address, course_id: &BytesN<32>) {
         // Increment total minted
-        let current: u64 = self.env.storage().instance()
-            .get(&StatsKey::TotalMinted).unwrap_or(0);
-        self.env.storage().instance()
+        let current: u64 = self
+            .env
+            .storage()
+            .instance()
+            .get(&StatsKey::TotalMinted)
+            .unwrap_or(0);
+        self.env
+            .storage()
+            .instance()
             .set(&StatsKey::TotalMinted, &(current + 1));
 
         // Track holder count for unique_holders
@@ -107,21 +135,34 @@ impl<'a> StatisticsManager<'a> {
         let holder_count: u32 = self.env.storage().instance().get(&holder_key).unwrap_or(0);
         if holder_count == 0 {
             // First time this holder receives a certificate
-            let unique: u64 = self.env.storage().instance()
-                .get(&StatsKey::UniqueHolders).unwrap_or(0);
-            self.env.storage().instance()
+            let unique: u64 = self
+                .env
+                .storage()
+                .instance()
+                .get(&StatsKey::UniqueHolders)
+                .unwrap_or(0);
+            self.env
+                .storage()
+                .instance()
                 .set(&StatsKey::UniqueHolders, &(unique + 1));
         }
-        self.env.storage().instance()
+        self.env
+            .storage()
+            .instance()
             .set(&holder_key, &(holder_count + 1));
 
         // Maintain token -> holder mapping (optional)
-        self.env.storage().instance()
+        self.env
+            .storage()
+            .instance()
             .set(&StatsKey::TokenHolder(token_id), recipient);
 
         // Track student-course pair for unique graduate counting
         let student_course_key = StatsKey::StudentCourse(recipient.clone(), course_id.clone());
-        self.env.storage().instance().set(&student_course_key, &true);
+        self.env
+            .storage()
+            .instance()
+            .set(&student_course_key, &true);
 
         // Update course statistics
         self.increment_course_issued(course_id);
@@ -129,33 +170,57 @@ impl<'a> StatisticsManager<'a> {
 
     /// Increment total revoked counter.
     pub fn increment_revoked(&self) {
-        let current: u64 = self.env.storage().instance()
-            .get(&StatsKey::TotalRevoked).unwrap_or(0);
-        self.env.storage().instance()
+        let current: u64 = self
+            .env
+            .storage()
+            .instance()
+            .get(&StatsKey::TotalRevoked)
+            .unwrap_or(0);
+        self.env
+            .storage()
+            .instance()
             .set(&StatsKey::TotalRevoked, &(current + 1));
     }
 
     /// Increment total verified counter.
     pub fn increment_verified(&self) {
-        let current: u64 = self.env.storage().instance()
-            .get(&StatsKey::TotalVerified).unwrap_or(0);
-        self.env.storage().instance()
+        let current: u64 = self
+            .env
+            .storage()
+            .instance()
+            .get(&StatsKey::TotalVerified)
+            .unwrap_or(0);
+        self.env
+            .storage()
+            .instance()
             .set(&StatsKey::TotalVerified, &(current + 1));
     }
 
     /// Increment total renewed counter.
     pub fn increment_renewed(&self) {
-        let current: u64 = self.env.storage().instance()
-            .get(&StatsKey::TotalRenewed).unwrap_or(0);
-        self.env.storage().instance()
+        let current: u64 = self
+            .env
+            .storage()
+            .instance()
+            .get(&StatsKey::TotalRenewed)
+            .unwrap_or(0);
+        self.env
+            .storage()
+            .instance()
             .set(&StatsKey::TotalRenewed, &(current + 1));
     }
 
     /// Increment total transferred counter.
     pub fn increment_transferred(&self) {
-        let current: u64 = self.env.storage().instance()
-            .get(&StatsKey::TotalTransferred).unwrap_or(0);
-        self.env.storage().instance()
+        let current: u64 = self
+            .env
+            .storage()
+            .instance()
+            .get(&StatsKey::TotalTransferred)
+            .unwrap_or(0);
+        self.env
+            .storage()
+            .instance()
             .set(&StatsKey::TotalTransferred, &(current + 1));
     }
 
@@ -306,7 +371,11 @@ mod tests {
     fn test_statistics_persist_across_instances() {
         let env = Env::default();
         let stats_mgr1 = StatisticsManager::new(&env);
-        stats_mgr1.increment_minted(1, &Address::generate(&env), &BytesN::from_array(&env, &[1u8; 32]));
+        stats_mgr1.increment_minted(
+            1,
+            &Address::generate(&env),
+            &BytesN::from_array(&env, &[1u8; 32]),
+        );
 
         let stats_mgr2 = StatisticsManager::new(&env);
         let stats = stats_mgr2.get_statistics();

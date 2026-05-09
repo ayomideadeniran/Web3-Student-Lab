@@ -120,8 +120,8 @@ pub fn apply_decay(score: u128, elapsed_ledgers: u32) -> u128 {
     // fraction = remainder * 693_147 / (HALF_LIFE_LEDGERS * 1_000_000)
     let ln2_num: u128 = 693_147;
     let ln2_den: u128 = 1_000_000;
-    let frac_decay = (remainder as u128 * ln2_num)
-        / (HALF_LIFE_LEDGERS as u128 * ln2_den / PRECISION);
+    let frac_decay =
+        (remainder as u128 * ln2_num) / (HALF_LIFE_LEDGERS as u128 * ln2_den / PRECISION);
     // decay_factor = PRECISION - frac_decay (clamped to 0)
     let decay_factor = PRECISION.saturating_sub(frac_decay);
     decayed * decay_factor / PRECISION

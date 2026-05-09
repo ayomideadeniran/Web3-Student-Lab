@@ -1,6 +1,5 @@
 /// Token buyback program module
 /// Handles automated token buyback configuration, frequency scheduling, and treasury management
-
 use soroban_sdk::{
     contract, contracterror, contractimpl, contracttype, panic_with_error, Address, Env, Symbol,
     Vec,
@@ -65,7 +64,7 @@ pub struct BuybackRecord {
 pub enum DataKey {
     BuybackConfig,
     LastBuybackTime,
-    BuybackHistory(u32),     // indexed by record number
+    BuybackHistory(u32), // indexed by record number
     BuybackCount,
     TreasuryBalance,
     CumulativeTokensBought,
@@ -116,7 +115,9 @@ impl TokenBuyback {
             enabled: true,
         };
 
-        env.storage().instance().set(&DataKey::BuybackConfig, &config);
+        env.storage()
+            .instance()
+            .set(&DataKey::BuybackConfig, &config);
         env.storage()
             .instance()
             .set(&DataKey::LastBuybackTime, &env.ledger().timestamp());
@@ -168,11 +169,21 @@ impl TokenBuyback {
         config.min_buyback_amount = min_buyback_amount;
         config.max_buyback_amount = max_buyback_amount;
 
-        env.storage().instance().set(&DataKey::BuybackConfig, &config);
+        env.storage()
+            .instance()
+            .set(&DataKey::BuybackConfig, &config);
 
         env.events().publish(
-            (Symbol::new(&env, "buyback"), Symbol::new(&env, "config_updated")),
-            (revenue_percentage, frequency, min_buyback_amount, max_buyback_amount),
+            (
+                Symbol::new(&env, "buyback"),
+                Symbol::new(&env, "config_updated"),
+            ),
+            (
+                revenue_percentage,
+                frequency,
+                min_buyback_amount,
+                max_buyback_amount,
+            ),
         );
     }
 
@@ -197,10 +208,15 @@ impl TokenBuyback {
         config.admin.require_auth();
         config.enabled = enabled;
 
-        env.storage().instance().set(&DataKey::BuybackConfig, &config);
+        env.storage()
+            .instance()
+            .set(&DataKey::BuybackConfig, &config);
 
         env.events().publish(
-            (Symbol::new(&env, "buyback"), Symbol::new(&env, "enabled_changed")),
+            (
+                Symbol::new(&env, "buyback"),
+                Symbol::new(&env, "enabled_changed"),
+            ),
             (enabled,),
         );
     }
@@ -223,7 +239,10 @@ impl TokenBuyback {
             .set(&DataKey::TreasuryBalance, &new_balance);
 
         env.events().publish(
-            (Symbol::new(&env, "buyback"), Symbol::new(&env, "revenue_deposited")),
+            (
+                Symbol::new(&env, "buyback"),
+                Symbol::new(&env, "revenue_deposited"),
+            ),
             (amount,),
         );
     }
@@ -332,7 +351,10 @@ impl TokenBuyback {
             .set(&DataKey::LastBuybackTime, &env.ledger().timestamp());
 
         env.events().publish(
-            (Symbol::new(&env, "buyback"), Symbol::new(&env, "buyback_executed")),
+            (
+                Symbol::new(&env, "buyback"),
+                Symbol::new(&env, "buyback_executed"),
+            ),
             (purchase_amount, tokens_purchased, price_per_token),
         );
     }
@@ -386,7 +408,11 @@ impl TokenBuyback {
                 .unwrap_or(0);
             let mut total = 0u128;
             for i in 0..count {
-                if let Some(record) = env.storage().instance().get::<_, BuybackRecord>(&DataKey::BuybackHistory(i)) {
+                if let Some(record) = env
+                    .storage()
+                    .instance()
+                    .get::<_, BuybackRecord>(&DataKey::BuybackHistory(i))
+                {
                     total += record.purchase_amount;
                 }
             }

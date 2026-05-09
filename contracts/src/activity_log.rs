@@ -4,9 +4,7 @@
 //! Supports querying by address, token ID, and recent activities with pagination.
 //! Activity logs are append-only and cannot be modified once stored.
 
-use soroban_sdk::{
-    contracttype, Address, BytesN, Env, Vec,
-};
+use soroban_sdk::{contracttype, Address, BytesN, Env, Vec};
 
 // Activity log entry stored on-chain.
 #[contracttype]
@@ -120,7 +118,10 @@ impl<'a> ActivityLogManager<'a> {
         self.env.storage().instance().set(&ts_idx_key, &true);
 
         // Update sequence
-        self.env.storage().instance().set(&ActivityLogKey::Sequence, &seq);
+        self.env
+            .storage()
+            .instance()
+            .set(&ActivityLogKey::Sequence, &seq);
 
         seq
     }
@@ -285,12 +286,7 @@ mod tests {
         let token_id: u128 = 12345;
         let data_hash = BytesN::<32>::from_array(&env, &[0u8; 32]);
 
-        activity_mgr.record(
-            EventType::Minted,
-            Some(token_id),
-            &admin_a,
-            data_hash,
-        );
+        activity_mgr.record(EventType::Minted, Some(token_id), &admin_a, data_hash);
 
         let entries = activity_mgr.get_activities_by_address(&admin_a, 10, 0);
         assert_eq!(entries.len(), 1);
@@ -312,12 +308,7 @@ mod tests {
         let data_hash = BytesN::<32>::from_array(&env, &[0u8; 32]);
 
         for i in 0..5u128 {
-            activity_mgr.record(
-                EventType::Minted,
-                Some(i),
-                &admin_a,
-                data_hash.clone(),
-            );
+            activity_mgr.record(EventType::Minted, Some(i), &admin_a, data_hash.clone());
         }
 
         let recent = activity_mgr.get_recent_activities(3);

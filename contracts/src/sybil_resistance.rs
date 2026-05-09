@@ -37,16 +37,24 @@ pub fn set_base_credits_config(env: &Env, amount: u128) {
 /// Verify an identity for sybil resistance and allocate base credits
 pub fn verify_identity(env: &Env, student: Address, did: String) -> bool {
     // Sybil detection: Check if DID is already linked to another address
-    if let Some(existing_addr) = env.storage().persistent().get::<_, Address>(&SybilKey::DidToAddress(did.clone())) {
+    if let Some(existing_addr) = env
+        .storage()
+        .persistent()
+        .get::<_, Address>(&SybilKey::DidToAddress(did.clone()))
+    {
         if existing_addr != student {
             return false; // Sybil attack detected: DID already in use by another address
         }
     }
-    
+
     // Check if address already has a different DID
-    if let Some(existing_record) = env.storage().persistent().get::<_, IdentityRecord>(&SybilKey::Identity(student.clone())) {
+    if let Some(existing_record) = env
+        .storage()
+        .persistent()
+        .get::<_, IdentityRecord>(&SybilKey::Identity(student.clone()))
+    {
         if existing_record.did != did {
-             return false; // Address already verified with a different DID
+            return false; // Address already verified with a different DID
         }
     }
 
@@ -56,22 +64,22 @@ pub fn verify_identity(env: &Env, student: Address, did: String) -> bool {
         is_verified: true,
         verified_at: env.ledger().timestamp(),
     };
-    
+
     env.storage()
         .persistent()
         .set(&SybilKey::Identity(student.clone()), &record);
-    
+
     env.storage()
         .persistent()
         .set(&SybilKey::DidToAddress(did), &student);
-        
+
     // Allocate base credits if not already initialized
     let current = get_governance_credits(env, &student);
     if current == 0 {
         let base = get_base_credits_config(env);
         set_governance_credits(env, student, base);
     }
-    
+
     true
 }
 

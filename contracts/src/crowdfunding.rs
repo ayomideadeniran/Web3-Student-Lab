@@ -1,4 +1,4 @@
-use soroban_sdk::{contracttype, Address, Env, String, Vec, Symbol, Map};
+use soroban_sdk::{contracttype, Address, Env, Map, String, Symbol, Vec};
 
 #[contracttype]
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -40,7 +40,11 @@ pub fn create_campaign(
 ) -> u64 {
     creator.require_auth();
 
-    let mut count: u64 = env.storage().instance().get(&CrowdfundingDataKey::CampaignCount).unwrap_or(0);
+    let mut count: u64 = env
+        .storage()
+        .instance()
+        .get(&CrowdfundingDataKey::CampaignCount)
+        .unwrap_or(0);
     count += 1;
 
     let campaign = Campaign {
@@ -55,14 +59,16 @@ pub fn create_campaign(
         refunded: false,
     };
 
-    env.storage().instance().set(&CrowdfundingDataKey::Campaign(count), &campaign);
-    env.storage().instance().set(&CrowdfundingDataKey::CampaignCount, &count);
+    env.storage()
+        .instance()
+        .set(&CrowdfundingDataKey::Campaign(count), &campaign);
+    env.storage()
+        .instance()
+        .set(&CrowdfundingDataKey::CampaignCount, &count);
 
     // Emit event
-    env.events().publish(
-        (Symbol::new(env, "campaign_created"), creator),
-        count,
-    );
+    env.events()
+        .publish((Symbol::new(env, "campaign_created"), creator), count);
 
     count
 }
@@ -87,15 +93,23 @@ pub fn contribute(env: &Env, contributor: Address, campaign_id: u64, amount: i12
     // Update contribution
     let key = CrowdfundingDataKey::Contribution(campaign_id, contributor.clone());
     let current_contribution: i128 = env.storage().instance().get(&key).unwrap_or(0);
-    env.storage().instance().set(&key, &(current_contribution + amount));
+    env.storage()
+        .instance()
+        .set(&key, &(current_contribution + amount));
 
     // Update campaign total
     campaign.total_funded += amount;
-    env.storage().instance().set(&CrowdfundingDataKey::Campaign(campaign_id), &campaign);
+    env.storage()
+        .instance()
+        .set(&CrowdfundingDataKey::Campaign(campaign_id), &campaign);
 
     // Emit event
     env.events().publish(
-        (Symbol::new(env, "contribution_made"), contributor, campaign_id),
+        (
+            Symbol::new(env, "contribution_made"),
+            contributor,
+            campaign_id,
+        ),
         amount,
     );
 }

@@ -1,5 +1,5 @@
 #![no_std]
-use soroban_sdk::{Env, contracttype};
+use soroban_sdk::{contracttype, Env};
 
 /// Proof of existence with high-precision timestamping and ledger sequencing.
 #[contracttype]
