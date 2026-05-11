@@ -48,7 +48,14 @@ export function CollaborativeCanvas({ roomId, userId, onCanvasReady }: Collabora
   }, [isConnected, onCanvasReady]);
 
   const defaultNodes = useMemo(() => nodes, [nodes]);
-  const defaultEdges = useMemo(() => edges, [edges]);
+  const defaultEdges = useMemo(
+    () =>
+      edges.map((edge) => ({
+        ...edge,
+        markerEnd: edge.markerEnd ? { type: edge.markerEnd.type as any } : undefined,
+      })) as any[],
+    [edges]
+  );
 
   const handleExportImage = async () => {
     if (!canvasRef.current) return;
