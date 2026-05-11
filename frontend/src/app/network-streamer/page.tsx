@@ -165,7 +165,7 @@ export default function NetworkLedgerStreamer() {
         container.attr('transform', event.transform);
       });
 
-    svg.call(zoom);
+    svg.call(zoom as any);
 
     // Create link elements
     const link = container
