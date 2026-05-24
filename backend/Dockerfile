@@ -15,8 +15,8 @@ RUN pnpm install
 # Copy source code (includes prisma directory)
 COPY . .
 
-# Generate Prisma client with explicit schema path
-RUN npx prisma generate --schema=./prisma/schema.prisma
+# Generate Prisma client with absolute schema path
+RUN npx prisma generate --schema=/app/prisma/schema.prisma
 
 # Build TypeScript to JavaScript
 RUN npm run build
