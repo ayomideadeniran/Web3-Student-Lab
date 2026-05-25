@@ -20,7 +20,10 @@ RUN pnpm install
 WORKDIR /app
 COPY . .
 
-# Generate Prisma client with workspace root path
+# Copy prisma directory explicitly
+COPY prisma ./prisma
+
+# Generate Prisma client with correct path
 RUN npx prisma generate --schema=prisma/schema.prisma
 
 # Change to backend directory and build

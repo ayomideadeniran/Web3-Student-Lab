@@ -1,26 +1,25 @@
-import freelanceRoute from './routes/freelance';
-import cacheMetrics from './cache/CacheMetrics.js';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import express, { Request, Response } from 'express';
 import { rateLimit } from 'express-rate-limit';
 import { createServer } from 'http';
-import { Server } from 'socket.io';
-import { requireWorkspaceMiddleware } from './middleware/WorkspaceContext.js';
-import prisma from './db/index.js';
+import cacheMetrics from './cache/CacheMetrics.js';
 import redisClient from './cache/RedisClient.js';
+import prisma from './db/index.js';
 import { dbRoutingMiddleware } from './middleware/dbRouting.js';
 import { decryptionMiddleware } from './middleware/encryptionMiddleware.js';
 import { apiRateLimiter } from './middleware/rateLimiter.js';
 import { requestLogger } from './middleware/requestLogger.js';
+import { requireWorkspaceMiddleware } from './middleware/WorkspaceContext.js';
+import freelanceRoute from './routes/freelance.js';
 import routes from './routes/index.js';
 import { validateEnvironment } from './utils/checkEnv.js';
-import { pubClient, redisConnection, subClient } from './utils/redis.js';
 import logger from './utils/logger.js';
+import { pubClient, redisConnection, subClient } from './utils/redis.js';
 import { initializeWebSocket } from './websocket/WebSocketServer.js';
 
 // Load environment variables
-dotenv.config();
+// dotenv.config(); // Skip in Docker Compose - use environment variables instead
 
 // Validate environment variables before starting the application
 // Skip validation in test environment as tests may override environment variables
@@ -35,7 +34,7 @@ if (process.env.NODE_ENV !== 'test') {
   });
 }
 
-export const app = express();
+export const app: express.Application = express();
 const httpServer = createServer(app);
 const port = process.env.PORT || 8080;
 
