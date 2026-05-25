@@ -21,8 +21,6 @@ COPY . .
 # Generate Prisma client with workspace root path
 RUN npx prisma generate --schema=backend/prisma/schema.prisma
 
-# Install dotenv, @prisma/config, and dev dependencies
-RUN pnpm add dotenv @prisma/config && pnpm install --dev
 
 # Change to backend directory and build
 WORKDIR /app/backend
