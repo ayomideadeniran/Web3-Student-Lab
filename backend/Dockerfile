@@ -6,21 +6,22 @@ WORKDIR /app
 # Install pnpm and prisma globally
 RUN npm install -g pnpm prisma
 
-# Install dependencies first (for faster caching)
+# Copy package files first (for faster caching)
 COPY package*.json ./
 
-# Install dependencies with pnpm
+# Install dependencies
 RUN pnpm install
 
-# Install @prisma/client explicitly before Prisma generation
-RUN pnpm add @prisma/client
+# Install backend dependencies
+WORKDIR /app/backend
+RUN pnpm install
 
-# Copy all files including prisma directory
+# Go back to app root to copy the rest of the files
+WORKDIR /app
 COPY . .
 
 # Generate Prisma client with workspace root path
-RUN npx prisma generate --schema=backend/prisma/schema.prisma
-
+RUN npx prisma generate --schema=prisma/schema.prisma
 
 # Change to backend directory and build
 WORKDIR /app/backend
@@ -32,11 +33,10 @@ FROM node:20-alpine
 WORKDIR /app
 
 # Copy production dependencies and built files from backend
-COPY --from=builder /app/backend/package*.json ./
-COPY --from=builder /app/backend/dist ./dist
-COPY --from=builder /app/backend/node_modules ./node_modules
-COPY --from=builder /app/backend/prisma ./prisma
-COPY --from=builder /app/backend/src/generated ./src/generated
+COPY --from=builder /app/package*.json ./
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/prisma ./prisma
 
 # Set environment variables
 ENV NODE_ENV=production

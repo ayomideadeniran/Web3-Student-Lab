@@ -6,7 +6,7 @@
   "scripts": {
     "build": "prisma generate && tsc",
     "start": "node dist/src/index.js",
-    "start:prod": "prisma db push && node dist/src/index.js",
+    "start:prod": "node dist/src/index.js",
     "dev": "tsx watch src/index.ts",
     "test": "NODE_ENV=test jest",
     "test:watch": "NODE_ENV=test jest --watch",
