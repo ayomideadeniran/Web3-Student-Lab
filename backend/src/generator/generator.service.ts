@@ -3,7 +3,7 @@ import logger from '../utils/logger.js';
 import dotenv from 'dotenv';
 import { cbManager } from '../lib/circuit-breaker/CircuitBreakerManager.js';
 
-dotenv.config();
+// dotenv.config(); // Skip in Docker Compose - use environment variables instead
 
 export interface ProjectIdea {
   title: string;

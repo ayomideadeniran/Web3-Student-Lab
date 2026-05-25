@@ -1,7 +1,7 @@
 import dotenv from 'dotenv';
 import { Redis } from 'ioredis';
 
-dotenv.config();
+// dotenv.config(); // Skip in Docker Compose - use environment variables instead
 
 const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
 
