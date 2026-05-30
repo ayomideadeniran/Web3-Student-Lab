@@ -1,6 +1,7 @@
 'use client';
 
 import { useWallet, WALLET_PROVIDERS } from '@/contexts/WalletContext';
+import { TransactionStateChart } from '@/components/wallet/TransactionStateChart';
 import { useState } from 'react';
 
 function truncate(pk: string) {
@@ -8,7 +9,16 @@ function truncate(pk: string) {
 }
 
 export default function WalletPage() {
-  const { publicKey, activeWallet, isConnecting, error, connect, disconnect } = useWallet();
+  const {
+    publicKey,
+    activeWallet,
+    isConnecting,
+    error,
+    transactionState,
+    transactionContext,
+    connect,
+    disconnect,
+  } = useWallet();
   const [showModal, setShowModal] = useState(false);
   const [connectError, setConnectError] = useState<string | null>(null);
 
@@ -90,6 +100,8 @@ export default function WalletPage() {
             </div>
           ))}
         </div>
+
+        <TransactionStateChart state={transactionState} context={transactionContext} />
       </div>
 
       {/* Connect Modal */}

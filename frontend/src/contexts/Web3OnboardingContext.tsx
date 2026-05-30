@@ -1,5 +1,7 @@
+'use client';
+
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import Joyride, { CallBackProps, STATUS, Step, ACTIONS, EVENTS } from 'react-joyride';
+import { Joyride, CallBackProps, STATUS, Step, ACTIONS, EVENTS } from 'react-joyride';
 import { useWallet } from './WalletContext';
 import { api } from '@/lib/api';
 
