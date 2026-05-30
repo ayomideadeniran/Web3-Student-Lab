@@ -110,6 +110,30 @@ const OPTIONAL_VARS: Record<string, { defaultValue: string; description: string 
     defaultValue: '',
     description: 'OpenAI API key for project idea generation (optional)',
   },
+  WEBHOOK_SIGNING_SECRET: {
+    defaultValue: 'webhook-secret',
+    description: 'HMAC signing secret for outbound webhook deliveries',
+  },
+  WEBHOOK_INGEST_SECRET: {
+    defaultValue: 'webhook-secret',
+    description: 'Shared secret for inbound webhook dispatch requests',
+  },
+  WEBHOOK_MAX_ATTEMPTS: {
+    defaultValue: '5',
+    description: 'Maximum retry attempts for webhook deliveries',
+  },
+  WEBHOOK_BACKOFF_DELAY_MS: {
+    defaultValue: '1000',
+    description: 'Initial retry delay for webhook deliveries',
+  },
+  WEBHOOK_REQUEST_TIMEOUT_MS: {
+    defaultValue: '10000',
+    description: 'Timeout for outgoing webhook HTTP requests',
+  },
+  WEBHOOK_WORKER_CONCURRENCY: {
+    defaultValue: '25',
+    description: 'BullMQ worker concurrency for webhook delivery',
+  },
 };
 
 /**

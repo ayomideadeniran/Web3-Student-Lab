@@ -11,6 +11,7 @@ import exportRouter from './export.routes.js';
 import generatorRouter from './generator/generator.routes.js';
 import learningRoutes from './learning/learning.routes.js';
 import healthRouter from './health.routes.js';
+import webhooksRouter from './webhooks.js';
 import securityRouter from './security.routes.js';
 import studentsRouter from './students.js';
 
@@ -29,6 +30,7 @@ router.use('/learning', learningRoutes);
 router.use('/security', securityRouter);
 router.use('/generator', generatorRouter);
 router.use('/export', exportRouter);
+router.use('/webhooks', webhooksRouter);
 router.use('/user', userRouter);
 
 export default router;

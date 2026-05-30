@@ -16,6 +16,7 @@ import { requestLogger } from './middleware/requestLogger.js';
 import { requireWorkspaceMiddleware } from './middleware/WorkspaceContext.js';
 import freelanceRoute from './routes/freelance.js';
 import routes from './routes/index.js';
+import { startWebhookWorker, stopWebhookWorker } from './services/webhooks/index.js';
 import { validateEnvironment } from './utils/checkEnv.js';
 import logger from './utils/logger.js';
 import { pubClient, redisConnection, subClient } from './utils/redis.js';
@@ -44,6 +45,8 @@ if (process.env.NODE_ENV !== 'test') {
   cacheWarmer.start().catch((err) => {
     logger.warn('CacheWarmer failed to start:', err);
   });
+
+  startWebhookWorker();
 
   logger.info('Distributed caching layer initialized');
 }
@@ -116,6 +119,7 @@ if (process.env.NODE_ENV !== 'test') {
     // Stop cache components
     blockHeaderListener.stop();
     cacheWarmer.stop();
+    await stopWebhookWorker();
     await distributedCacheManager.gracefulShutdown();
 
     // Clean up connections
@@ -135,6 +139,7 @@ if (process.env.NODE_ENV !== 'test') {
     // Stop cache components
     blockHeaderListener.stop();
     cacheWarmer.stop();
+    await stopWebhookWorker();
     await distributedCacheManager.gracefulShutdown();
 
     // Clean up connections
