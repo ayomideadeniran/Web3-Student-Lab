@@ -2,6 +2,8 @@
 process.env.NODE_ENV = 'test';
 
 export default {
+  setupFiles: ['dotenv/config'],
+  setupFiles: ['<rootDir>/jest.setup.js'],
   preset: 'ts-jest',
   testEnvironment: 'node',
   extensionsToTreatAsEsm: ['.ts'],

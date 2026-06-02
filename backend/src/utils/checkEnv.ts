@@ -110,37 +110,13 @@ const OPTIONAL_VARS: Record<string, { defaultValue: string; description: string 
     defaultValue: '',
     description: 'OpenAI API key for project idea generation (optional)',
   },
-  DECENTRALIZED_STORAGE_PROVIDER: {
-    defaultValue: 'pinata',
-    description: 'Decentralized storage provider (pinata or mock)',
-  },
-  PINATA_JWT: {
+  SENTRY_DSN: {
     defaultValue: '',
-    description: 'Pinata JWT for IPFS pinning',
+    description: 'Sentry DSN for centralized error reporting (optional)',
   },
-  STORAGE_GATEWAY_BASE_URL: {
-    defaultValue: 'https://gateway.pinata.cloud/ipfs',
-    description: 'Base gateway URL used for pinned IPFS content',
-  },
-  STORAGE_GC_RETENTION_DAYS: {
-    defaultValue: '30',
-    description: 'How long to retain unreferenced assets before unpinning',
-  },
-  STORAGE_MAX_PIN_ATTEMPTS: {
-    defaultValue: '5',
-    description: 'Maximum retry attempts for storage pin jobs',
-  },
-  STORAGE_BACKOFF_DELAY_MS: {
-    defaultValue: '1000',
-    description: 'Initial backoff delay for storage pin jobs',
-  },
-  STORAGE_WORKER_CONCURRENCY: {
-    defaultValue: '10',
-    description: 'BullMQ concurrency for storage pin jobs',
-  },
-  STORAGE_JOB_TIMEOUT_MS: {
-    defaultValue: '30000',
-    description: 'Timeout for storage pin jobs',
+  SENTRY_RELEASE: {
+    defaultValue: 'web3-student-lab@1.0.0',
+    description: 'Release tag sent to Sentry for error grouping',
   },
 };
 
