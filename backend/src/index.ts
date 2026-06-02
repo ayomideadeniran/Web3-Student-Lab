@@ -1,6 +1,5 @@
 import cors from 'cors';
 import express, { Request, Response } from 'express';
-import { rateLimit } from 'express-rate-limit';
 import { createServer } from 'http';
 import blockHeaderListener from './cache/BlockHeaderListener.js';
 import cacheMetrics from './cache/CacheMetrics.js';
@@ -11,7 +10,7 @@ import { rpcCacheHeadersMiddleware, rpcCacheMiddleware } from './cache/RPCInterc
 import prisma from './db/index.js';
 import { dbRoutingMiddleware } from './middleware/dbRouting.js';
 import { decryptionMiddleware } from './middleware/encryptionMiddleware.js';
-import { apiRateLimiter } from './middleware/rateLimiter.js';
+import { rateLimiter } from './middleware/rateLimiter.js';
 import { requestLogger } from './middleware/requestLogger.js';
 import { requireWorkspaceMiddleware } from './middleware/WorkspaceContext.js';
 import freelanceRoute from './routes/freelance.js';
@@ -22,6 +21,7 @@ import { pubClient, redisConnection, subClient } from './utils/redis.js';
 import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec } from './config/swagger.js';
 import config from './config/env.config.js';
+import { setRateLimitEnvOverrides } from './config/rateLimit.config.js';
 import { initializeWebSocket } from './websocket/WebSocketServer.js';
 import { initializeSentry, getSentryErrorHandler, getSentryRequestHandler } from './utils/sentry.js';
 import { errorHandler } from './middleware/errorHandler.js';
@@ -61,26 +61,28 @@ export const app: express.Application = express();
 const httpServer = createServer(app);
 const port = config.app.port || 8080;
 
+// Wire rate limit config from environment variables
+setRateLimitEnvOverrides({
+  'auth-login': {
+    burst: { windowMs: 1000, max: config.rateLimiting.loginBurstMax },
+    sustained: { windowMs: 60000, max: config.rateLimiting.defaultSustainedMax },
+  },
+  'auth-register': {
+    burst: { windowMs: 1000, max: config.rateLimiting.registerBurstMax },
+    sustained: { windowMs: 60000, max: config.rateLimiting.defaultSustainedMax },
+  },
+});
+
 app.use(cors());
 app.use(express.json());
 app.use(decryptionMiddleware);
 app.use(dbRoutingMiddleware);
 
-// Global Rate Limiting
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per windowMs
-  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
-  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
-  message: {
-    status: 'error',
-    message: 'Too many requests from this IP, please try again after 15 minutes',
-  },
-});
+// Global Rate Limiting - configurable, multi-tier, per-user + per-endpoint
+if (config.rateLimiting.enabled) {
+  app.use(rateLimiter);
+}
 
-// Global Rate Limiting - now using sliding window
-app.use(apiRateLimiter);
-app.use(limiter);
 app.use(requestLogger);
 app.use(getSentryRequestHandler());
 
