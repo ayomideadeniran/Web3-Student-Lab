@@ -16,6 +16,7 @@ export default defineConfig({
       include: [
         'src/lib/p2p-crypto.ts',
         'src/lib/web3-transaction-simulator.ts',
+        'src/hooks/useBlockchainExplorer.ts',
       ],
     },
   },
