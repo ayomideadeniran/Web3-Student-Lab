@@ -1,5 +1,5 @@
 import { AuthProvider } from "@/contexts/AuthContext";
-import { ThemeProvider } from "@/contexts/ThemeContext";
+import { Providers } from "@/lib/theme/providers";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
@@ -37,7 +37,7 @@ export default function RootLayout({
             __html: `
               (function() {
                 try {
-                  var theme = localStorage.getItem('theme');
+                  var theme = localStorage.getItem('web3-lab-theme');
                   var isDark = theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches);
                   if (isDark) {
                     document.documentElement.classList.add('dark');
@@ -53,7 +53,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground min-h-screen transition-colors duration-200`}
       >
-        <ThemeProvider>
+        <Providers>
           <AuthProvider>
             <NotificationProvider>
               <a href="#main-content" className="skip-to-content">
@@ -64,7 +64,7 @@ export default function RootLayout({
               <ToastContainer />
             </NotificationProvider>
           </AuthProvider>
-        </ThemeProvider>
+        </Providers>
       </body>
     </html>
   );

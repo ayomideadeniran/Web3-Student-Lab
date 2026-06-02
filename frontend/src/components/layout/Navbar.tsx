@@ -1,5 +1,6 @@
 "use client";
 
+import { ThemeToggleCompact } from "@/components/theme";
 import { useAuth } from "@/contexts/AuthContext";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -80,6 +81,7 @@ export default function Navbar() {
           </div>
 
           <div className="hidden md:flex items-center gap-4">
+            <ThemeToggleCompact className="text-gray-400 hover:text-white dark:text-gray-300 dark:hover:text-white" />
             {user ? (
               <div className="flex items-center gap-4">
                 <Link
