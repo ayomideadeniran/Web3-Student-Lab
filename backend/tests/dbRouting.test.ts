@@ -1,9 +1,9 @@
 import {
-    clearDbRoutingStateForTests,
-    getDatabaseRoleForOperation,
-    markUserWriteToPrimary,
-    runWithDbRoutingContext,
-    setDbRoutingUserId,
+  clearDbRoutingStateForTests,
+  getDatabaseRoleForOperation,
+  markUserWriteToPrimary,
+  runWithDbRoutingContext,
+  setDbRoutingUserId,
 } from '../src/db/requestContext.js';
 
 describe('DB routing context', () => {

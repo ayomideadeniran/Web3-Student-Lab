@@ -3,6 +3,7 @@ export interface User {
   email: string;
   name: string;
   did?: string | null;
+  walletAddress?: string | null;
 }
 
 export interface LoginRequest {
@@ -15,6 +16,7 @@ export interface RegisterRequest {
   password: string;
   firstName: string;
   lastName: string;
+  walletAddress?: string;
 }
 
 export interface AuthResponse {

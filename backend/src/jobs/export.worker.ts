@@ -45,7 +45,9 @@ const worker = new Worker(
   EXPORT_QUEUE_NAME,
   async (job: Job<ExportJobData>) => {
     const { type, format, userId } = job.data;
-    logger.info(`Starting export job ${job.id} for user ${userId}, type: ${type}, format: ${format}`);
+    logger.info(
+      `Starting export job ${job.id} for user ${userId}, type: ${type}, format: ${format}`
+    );
 
     await publishExportProgress(job, 5, 'started');
 
@@ -132,9 +134,13 @@ const _cleanupWorker = new Worker(
 
 import { Queue } from 'bullmq';
 const cleanupQueue = new Queue(CLEANUP_QUEUE_NAME, { connection: redisConnection });
-await cleanupQueue.add('cleanup', {}, {
-  repeat: { pattern: '0 * * * *' } // Every hour
-});
+await cleanupQueue.add(
+  'cleanup',
+  {},
+  {
+    repeat: { pattern: '0 * * * *' }, // Every hour
+  }
+);
 
 worker.on('completed', (job) => {
   logger.info(`Job ${job.id} completed successfully`);

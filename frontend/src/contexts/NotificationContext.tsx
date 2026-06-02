@@ -1,16 +1,10 @@
-"use client";
+'use client';
 
-import React, {
-    createContext,
-    useCallback,
-    useContext,
-    useReducer,
-    useRef,
-} from "react";
+import React, { createContext, useCallback, useContext, useReducer, useRef } from 'react';
 
-export type NotificationType = "signature" | "enrollment" | "certificate" | "system" | "error";
+export type NotificationType = 'signature' | 'enrollment' | 'certificate' | 'system' | 'error';
 
-export interface Nion {
+export interface AppNotification {
   id: string;
   type: NotificationType;
   title: string;
@@ -29,43 +23,40 @@ export interface NotificationGroup {
 }
 
 interface State {
-  notifications: Notification[];
-  toasts: Notification[]; // capped queue for storm prevention
+  notifications: AppNotification[];
+  toasts: AppNotification[]; // capped queue for storm prevention
 }
 
 type Action =
-  | { type: "ADD"; payload: Notification }
-  | { type: "MARK_READ"; id: string }
-  | { type: "MARK_ALL_READ" }
-  | { type: "DISMISS_TOAST"; id: string };
+  | { type: 'ADD'; payload: AppNotification }
+  | { type: 'MARK_READ'; id: string }
+  | { type: 'MARK_ALL_READ' }
+  | { type: 'DISMISS_TOAST'; id: string };
 
 const MAX_TOASTS = 3;
 const MAX_NOTIFICATIONS = 500;
 
 function reducer(state: State, action: Action): State {
   switch (action.type) {
-    case "ADD": {
-      const notifications = [action.payload, ...state.notifications].slice(
-        0,
-        MAX_NOTIFICATIONS
-      );
+    case 'ADD': {
+      const notifications = [action.payload, ...state.notifications].slice(0, MAX_NOTIFICATIONS);
       // Storm prevention: only keep latest MAX_TOASTS toasts
       const toasts = [action.payload, ...state.toasts].slice(0, MAX_TOASTS);
       return { notifications, toasts };
     }
-    case "MARK_READ":
+    case 'MARK_READ':
       return {
         ...state,
         notifications: state.notifications.map((n) =>
           n.id === action.id ? { ...n, read: true } : n
         ),
       };
-    case "MARK_ALL_READ":
+    case 'MARK_ALL_READ':
       return {
         ...state,
         notifications: state.notifications.map((n) => ({ ...n, read: true })),
       };
-    case "DISMISS_TOAST":
+    case 'DISMISS_TOAST':
       return {
         ...state,
         toasts: state.toasts.filter((t) => t.id !== action.id),
@@ -76,7 +67,7 @@ function reducer(state: State, action: Action): State {
 }
 
 /** Group notifications by type, returning sorted groups (most recent first) */
-export function groupNotifications(notifications: Notification[]): NotificationGroup[] {
+export function groupNotifications(notifications: AppNotification[]): NotificationGroup[] {
   const map = new Map<NotificationType, NotificationGroup>();
   for (const n of notifications) {
     const existing = map.get(n.type);
@@ -98,27 +89,25 @@ export function groupNotifications(notifications: Notification[]): NotificationG
       });
     }
   }
-  return Array.from(map.values()).sort(
-    (a, b) => b.latestTimestamp - a.latestTimestamp
-  );
+  return Array.from(map.values()).sort((a, b) => b.latestTimestamp - a.latestTimestamp);
 }
 
 function typeLabel(type: NotificationType): string {
   const labels: Record<NotificationType, string> = {
-    signature: "Signatures",
-    enrollment: "Enrollments",
-    certificate: "Certificates",
-    system: "System",
-    error: "Errors",
+    signature: 'Signatures',
+    enrollment: 'Enrollments',
+    certificate: 'Certificates',
+    system: 'System',
+    error: 'Errors',
   };
   return labels[type];
 }
 
 interface NotificationContextValue {
-  notifications: Notification[];
-  toasts: Notification[];
+  notifications: AppNotification[];
+  toasts: AppNotification[];
   unreadCount: number;
-  push: (n: Omit<Notification, "id" | "timestamp" | "read">) => void;
+  push: (n: Omit<AppNotification, 'id' | 'timestamp' | 'read'>) => void;
   markRead: (id: string) => void;
   markAllRead: () => void;
   dismissToast: (id: string) => void;
@@ -131,46 +120,48 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   // Rate-limit: track last push time per type to batch storms
   const lastPushRef = useRef<Map<NotificationType, number>>(new Map());
 
-  const push = useCallback(
-    (n: Omit<Notification, "id" | "timestamp" | "read">) => {
-      const now = Date.now();
-      const last = lastPushRef.current.get(n.type) ?? 0;
-      // Throttle same-type notifications to max 1 toast per 200ms
-      if (now - last < 200) {
-        // Still add to list but skip toast by dispatching without toast
-        const notification: Notification = {
-          ...n,
-          id: `${now}-${Math.random().toString(36).slice(2)}`,
-          timestamp: now,
-          read: false,
-        };
-        dispatch({ type: "ADD", payload: notification });
-        return;
-      }
-      lastPushRef.current.set(n.type, now);
-      const notification: Notification = {
+  const push = useCallback((n: Omit<AppNotification, 'id' | 'timestamp' | 'read'>) => {
+    const now = Date.now();
+    const last = lastPushRef.current.get(n.type) ?? 0;
+    // Throttle same-type notifications to max 1 toast per 200ms
+    if (now - last < 200) {
+      // Still add to list but skip toast by dispatching without toast
+      const notification: AppNotification = {
         ...n,
         id: `${now}-${Math.random().toString(36).slice(2)}`,
         timestamp: now,
         read: false,
       };
-      dispatch({ type: "ADD", payload: notification });
-    },
-    []
-  );
+      dispatch({ type: 'ADD', payload: notification });
+      return;
+    }
+    lastPushRef.current.set(n.type, now);
+    const notification: AppNotification = {
+      ...n,
+      id: `${now}-${Math.random().toString(36).slice(2)}`,
+      timestamp: now,
+      read: false,
+    };
+    dispatch({ type: 'ADD', payload: notification });
+  }, []);
 
-  const markRead = useCallback((id: string) => dispatch({ type: "MARK_READ", id }), []);
-  const markAllRead = useCallback(() => dispatch({ type: "MARK_ALL_READ" }), []);
-  const dismissToast = useCallback(
-    (id: string) => dispatch({ type: "DISMISS_TOAST", id }),
-    []
-  );
+  const markRead = useCallback((id: string) => dispatch({ type: 'MARK_READ', id }), []);
+  const markAllRead = useCallback(() => dispatch({ type: 'MARK_ALL_READ' }), []);
+  const dismissToast = useCallback((id: string) => dispatch({ type: 'DISMISS_TOAST', id }), []);
 
   const unreadCount = state.notifications.filter((n) => !n.read).length;
 
   return (
     <NotificationContext.Provider
-      value={{ notifications: state.notifications, toasts: state.toasts, unreadCount, push, markRead, markAllRead, dismissToast }}
+      value={{
+        notifications: state.notifications,
+        toasts: state.toasts,
+        unreadCount,
+        push,
+        markRead,
+        markAllRead,
+        dismissToast,
+      }}
     >
       {children}
     </NotificationContext.Provider>
@@ -179,6 +170,6 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
 export function useNotifications() {
   const ctx = useContext(NotificationContext);
-  if (!ctx) throw new Error("useNotifications must be used within NotificationProvider");
+  if (!ctx) throw new Error('useNotifications must be used within NotificationProvider');
   return ctx;
 }

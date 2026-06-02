@@ -26,6 +26,10 @@ export const registerSchema = z.object({
       /^[a-zA-Z\s'-]+$/,
       'Last name can only contain letters, spaces, hyphens, and apostrophes'
     ),
+  walletAddress: z
+    .string()
+    .regex(/^G[A-Z2-7]{55}$/, 'Invalid Stellar wallet address format')
+    .optional(),
 });
 
 /**
@@ -61,10 +65,7 @@ export const web3VerifySchema = z.object({
     .string()
     .min(1, 'Signature is required')
     .regex(/^0x[a-fA-F0-9]{130,132}$/, 'Invalid signature format'),
-  nonce: z
-    .string()
-    .min(1, 'Nonce is required')
-    .min(32, 'Invalid nonce length'),
+  nonce: z.string().min(1, 'Nonce is required').min(32, 'Invalid nonce length'),
 });
 
 /**

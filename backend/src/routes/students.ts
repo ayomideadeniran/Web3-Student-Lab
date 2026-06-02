@@ -7,6 +7,7 @@ import { cacheTTL } from '../config/redis.config.js';
 import prisma from '../db/index.js';
 import { broadcastEvent } from '../websocket/gateway.js';
 import { linkDidToCertificates } from './certificates.js';
+import { auditAction } from '../middleware/audit.js';
 
 const router = Router();
 
@@ -26,40 +27,44 @@ router.get('/', async (req, res) => {
 });
 
 // GET /api/students/:id - Get student by ID
-router.get('/:id', cacheMiddleware({
-  ttl: cacheTTL.user.profile,
-  keyGenerator: (req) => CACHE_KEYS.user.profile(req.params.id)
-}), async (req, res) => {
-  try {
-    const { id } = req.params;
-    const student = await prisma.student.findUnique({
-      where: { id },
-      include: {
-        enrollments: {
-          include: {
-            course: true,
+router.get(
+  '/:id',
+  cacheMiddleware({
+    ttl: cacheTTL.user.profile,
+    keyGenerator: (req) => CACHE_KEYS.user.profile(req.params.id as string),
+  }),
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+      const student = await prisma.student.findUnique({
+        where: { id: id as string },
+        include: {
+          enrollments: {
+            include: {
+              course: true,
+            },
+          },
+          certificates: {
+            include: {
+              course: true,
+            },
           },
         },
-        certificates: {
-          include: {
-            course: true,
-          },
-        },
-      },
-    });
+      });
 
-    if (!student) {
-      return res.status(404).json({ error: 'Student not found' });
+      if (!student) {
+        return res.status(404).json({ error: 'Student not found' });
+      }
+
+      res.json(student);
+    } catch {
+      res.status(500).json({ error: 'Failed to fetch student' });
     }
-
-    res.json(student);
-  } catch {
-    res.status(500).json({ error: 'Failed to fetch student' });
   }
-});
+);
 
 // POST /api/students - Create a new student
-router.post('/', async (req, res) => {
+router.post('/', auditAction('CREATE_STUDENT', 'Student'), async (req, res) => {
   try {
     const { email, firstName, lastName, did } = req.body;
 
@@ -98,7 +103,7 @@ router.post('/', async (req, res) => {
 });
 
 // PUT /api/students/:id - Update a student
-router.put('/:id', async (req, res) => {
+router.put('/:id', auditAction('UPDATE_STUDENT', 'Student'), async (req, res) => {
   try {
     const { id } = req.params;
     const { email, firstName, lastName, did } = req.body;
@@ -140,7 +145,7 @@ router.put('/:id', async (req, res) => {
 });
 
 // DELETE /api/students/:id - Delete a student
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', auditAction('DELETE_STUDENT', 'Student'), async (req, res) => {
   try {
     const { id } = req.params;
 

@@ -31,7 +31,7 @@ class AnonymizationService {
         include: {
           enrollments: true,
           feedback: true,
-        }
+        },
       });
 
       // 2. Clear existing (or move to archive if needed) analytics data
@@ -50,7 +50,7 @@ class AnonymizationService {
           metadata: {
             enrollmentCount: student.enrollments.length,
             feedbackCount: student.feedback.length,
-          }
+          },
         });
 
         // Anonymize Enrollments
@@ -62,8 +62,8 @@ class AnonymizationService {
             category: enrollment.status,
             timestamp: enrollment.enrolledAt,
             metadata: {
-              courseId: enrollment.courseId
-            }
+              courseId: enrollment.courseId,
+            },
           });
         }
       }
@@ -71,11 +71,13 @@ class AnonymizationService {
       // 3. Load sanitized data into analytics table
       if (analyticsBatch.length > 0) {
         await (prisma as any).analyticsData.createMany({
-          data: analyticsBatch
+          data: analyticsBatch,
         });
       }
 
-      logger.info(`Successfully anonymized and loaded ${analyticsBatch.length} records into analytics.`);
+      logger.info(
+        `Successfully anonymized and loaded ${analyticsBatch.length} records into analytics.`
+      );
     } catch (error) {
       logger.error('Anonymization job failed:', error);
     }

@@ -25,10 +25,7 @@ export function useThemeMode() {
   };
 
   // Get current theme colors
-  const colors =
-    currentTheme === 'light'
-      ? THEME_COLORS.light
-      : THEME_COLORS.dark;
+  const colors = currentTheme === 'light' ? THEME_COLORS.light : THEME_COLORS.dark;
 
   // Get chart colors for D3
   const chartColors = getChartColors(currentTheme as 'light' | 'dark');

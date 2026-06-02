@@ -1,6 +1,6 @@
 import dotenv from 'dotenv';
 
-dotenv.config();
+// dotenv.config(); // Skip in Docker Compose - use environment variables instead
 
 const RPC_DEFAULTS: Record<string, string> = {
   local: 'http://localhost:8000/soroban/rpc',

@@ -23,9 +23,7 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({
 
   if (!mounted) {
     // Return placeholder to prevent FOUC
-    return (
-      <div className={`h-10 w-10 rounded-lg bg-gray-900 ${className}`} />
-    );
+    return <div className={`h-10 w-10 rounded-lg bg-gray-900 ${className}`} />;
   }
 
   const sizeMap = {
@@ -46,21 +44,11 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         onClick={toggleTheme}
-        className={`
-          flex items-center gap-2 rounded-lg px-3 py-2
-          bg-gray-900 hover:bg-gray-800 dark:bg-gray-100 dark:hover:bg-gray-200
-          text-gray-400 hover:text-gray-300 dark:text-gray-600 dark:hover:text-gray-700
-          transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-black dark:focus:ring-offset-white
-          ${className}
-        `}
+        className={`flex items-center gap-2 rounded-lg bg-gray-900 px-3 py-2 text-gray-400 transition-colors hover:bg-gray-800 hover:text-gray-300 focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-black focus:outline-none dark:bg-gray-100 dark:text-gray-600 dark:hover:bg-gray-200 dark:hover:text-gray-700 dark:focus:ring-offset-white ${className} `}
         aria-label={`Switch to ${isDark ? 'light' : 'dark'} mode`}
       >
         <AnimatedThemeIcon isDark={isDark} size={size} />
-        {showLabel && (
-          <span className="text-sm font-medium">
-            {isDark ? 'Dark' : 'Light'}
-          </span>
-        )}
+        {showLabel && <span className="text-sm font-medium">{isDark ? 'Dark' : 'Light'}</span>}
       </motion.button>
     );
   }
@@ -71,14 +59,7 @@ export const ThemeToggle: React.FC<ThemeToggleProps> = ({
       whileHover={{ scale: 1.1 }}
       whileTap={{ scale: 0.9 }}
       onClick={toggleTheme}
-      className={`
-        relative flex items-center justify-center rounded-lg
-        ${sizeMap[size]}
-        bg-gray-900 hover:bg-gray-800 dark:bg-gray-100 dark:hover:bg-gray-200
-        text-gray-400 hover:text-gray-300 dark:text-gray-600 dark:hover:text-gray-700
-        transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-black dark:focus:ring-offset-white
-        ${className}
-      `}
+      className={`relative flex items-center justify-center rounded-lg ${sizeMap[size]} bg-gray-900 text-gray-400 transition-colors hover:bg-gray-800 hover:text-gray-300 focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-black focus:outline-none dark:bg-gray-100 dark:text-gray-600 dark:hover:bg-gray-200 dark:hover:text-gray-700 dark:focus:ring-offset-white ${className} `}
       aria-label={`Switch to ${isDark ? 'light' : 'dark'} mode`}
       type="button"
     >
@@ -130,9 +111,7 @@ const AnimatedThemeIcon: React.FC<{ isDark: boolean; size: 'sm' | 'md' | 'lg' }>
 };
 
 // Compact version for navigation bars
-export const ThemeToggleCompact: React.FC<{ className?: string }> = ({
-  className = '',
-}) => {
+export const ThemeToggleCompact: React.FC<{ className?: string }> = ({ className = '' }) => {
   const { isDark, mounted, toggleTheme } = useThemeMode();
 
   if (!mounted) {
@@ -144,13 +123,7 @@ export const ThemeToggleCompact: React.FC<{ className?: string }> = ({
       whileHover={{ scale: 1.1 }}
       whileTap={{ scale: 0.9 }}
       onClick={toggleTheme}
-      className={`
-        p-1.5 rounded-md text-gray-400 hover:text-gray-300
-        dark:text-gray-300 dark:hover:text-white
-        hover:bg-gray-900 dark:hover:bg-gray-800
-        transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500
-        ${className}
-      `}
+      className={`rounded-md p-1.5 text-gray-400 transition-colors hover:bg-gray-900 hover:text-gray-300 focus:ring-2 focus:ring-purple-500 focus:outline-none dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white ${className} `}
       aria-label={`Switch to ${isDark ? 'light' : 'dark'} mode`}
     >
       <motion.div

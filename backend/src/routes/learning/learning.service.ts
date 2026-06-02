@@ -117,15 +117,6 @@ export const listCourses = async (difficulty?: string): Promise<CurriculumCourse
 
     await cacheService.set(cacheKey, result, cacheTTL.courses.list);
     return result;
-      id: course.id,
-      title: course.title,
-      description: course.description,
-      instructor: course.instructor,
-      credits: course.credits,
-      createdAt: course.createdAt,
-      updatedAt: course.updatedAt,
-      modules: filterModulesByDifficulty(getCurriculumForCourse(course.id), difficulty),
-    }));
   } catch (_error) {
     console.warn('Database error in listCourses, falling back to mock data');
     const now = new Date();
@@ -219,7 +210,7 @@ export const getStudentProgress = async (
 ): Promise<Progress> => {
   const key = `${studentId}:${courseId}`;
   const cacheKey = `${CACHE_KEYS.user.progress(studentId)}:${courseId}`;
-  
+
   const cached = await cacheService.get<Progress>(cacheKey);
   if (cached) return cached;
 
@@ -298,14 +289,16 @@ export const updateStudentProgress = async (
   if (input.status === 'completed') {
     if (!completedLessonSet.has(input.lessonId)) {
       // Log individual lesson completion activity
-      (prisma as any).studentActivity.create({
-        data: {
-          studentId,
-          courseId,
-          lessonId: input.lessonId,
-          action: 'COMPLETED_LESSON',
-        }
-      }).catch((err: any) => console.warn('Failed to log student activity:', err));
+      (prisma as any).studentActivity
+        .create({
+          data: {
+            studentId,
+            courseId,
+            lessonId: input.lessonId,
+            action: 'COMPLETED_LESSON',
+          },
+        })
+        .catch((err: any) => console.warn('Failed to log student activity:', err));
     }
     completedLessonSet.add(input.lessonId);
   } else {

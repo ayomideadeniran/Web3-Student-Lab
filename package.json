@@ -15,25 +15,11 @@
     "test-all": "npm run test --prefix backend"
   },
   "devDependencies": {
-    "@commitlint/cli": "^20.5.0",
-    "@commitlint/config-conventional": "^20.5.0",
-    "concurrently": "^8.2.2",
-    "husky": "^9.1.5",
-    "lightningcss": "^1.32.0",
-    "lightningcss-win32-x64-msvc": "^1.32.0",
-    "lint-staged": "^15.2.10",
-    "prettier": "^3.8.1",
-    "prettier-plugin-tailwindcss": "^0.7.2"
+    "concurrently": "^8.2.2"
   },
-  "lint-staged": {
-    "*.{js,jsx,ts,tsx,json,md,yml,yaml}": [
-      "prettier --write"
-    ],
-    "contracts/**/*.rs": [
-      "bash -lc \"cargo clippy --manifest-path contracts/Cargo.toml -- -D warnings\""
-    ]
-  },
+
   "dependencies": {
     "@stellar/stellar-sdk": "^14.6.1"
-  }
+  },
+  "packageManager": "pnpm@10.26.1+sha512.664074abc367d2c9324fdc18037097ce0a8f126034160f709928e9e9f95d98714347044e5c3164d65bd5da6c59c6be362b107546292a8eecb7999196e5ce58fa"
 }

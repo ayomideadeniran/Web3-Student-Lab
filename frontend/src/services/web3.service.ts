@@ -27,16 +27,16 @@ export class Web3AuthService {
   async initialize(): Promise<boolean> {
     try {
       const ethereumProvider = await detectEthereumProvider();
-      
+
       if (!ethereumProvider) {
         throw new Error('MetaMask is not installed');
       }
 
       this.provider = new ethers.BrowserProvider(ethereumProvider as any);
-      
+
       // Request account access
       await this.provider.send('eth_requestAccounts', []);
-      
+
       this.signer = await this.provider.getSigner();
       return true;
     } catch (error) {
@@ -53,7 +53,7 @@ export class Web3AuthService {
       if (!this.signer) {
         await this.initialize();
       }
-      
+
       if (!this.signer) {
         return null;
       }
@@ -147,7 +147,7 @@ export class Web3AuthService {
       }
 
       const authResponse = await response.json();
-      
+
       // Store tokens in localStorage
       localStorage.setItem('accessToken', authResponse.accessToken);
       localStorage.setItem('refreshToken', authResponse.refreshToken);
@@ -166,7 +166,7 @@ export class Web3AuthService {
   disconnect(): void {
     this.provider = null;
     this.signer = null;
-    
+
     // Clear stored tokens
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');

@@ -16,7 +16,9 @@ export const GraphNode: React.FC<GraphNodeProps> = ({ node, onClick }) => {
       animate={{ scale: 1, x: node.x, y: node.y }}
       transition={{ type: 'spring', stiffness: 260, damping: 20 }}
       onClick={() => onClick(node)}
-      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onClick(node); }}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') onClick(node);
+      }}
       role="button"
       tabIndex={0}
       aria-label={`${node.type === 'account' ? 'Account' : node.type === 'asset' ? 'Asset' : 'Node'}: ${node.label || node.id}. Click to view details.`}
@@ -44,7 +46,7 @@ export const GraphNode: React.FC<GraphNodeProps> = ({ node, onClick }) => {
         textAnchor="middle"
         fill="#888"
         fontSize="10"
-        className="font-mono font-bold uppercase tracking-tighter"
+        className="font-mono font-bold tracking-tighter uppercase"
         aria-hidden="true"
       >
         {node.label || node.id.slice(0, 4)}

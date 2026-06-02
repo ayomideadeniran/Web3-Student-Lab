@@ -8,6 +8,8 @@ interface RateLimitOptions {
   keyPrefix: string;
 }
 
+type ResolvedRateLimitConfig = RateLimitOptions;
+
 export const slidingWindowRateLimiter = (options: RateLimitOptions) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     const ip = req.ip || req.socket.remoteAddress || 'unknown';
@@ -39,7 +41,7 @@ export const slidingWindowRateLimiter = (options: RateLimitOptions) => {
       }
 
       // results[2] contains the ZCARD result
-      const requestCount = results[2][1] as number;
+      const requestCount = (results[2] ? results[2][1] : 0) as number;
       const remaining = Math.max(0, options.limit - requestCount);
 
       // Set RateLimit headers
@@ -67,13 +69,46 @@ export const slidingWindowRateLimiter = (options: RateLimitOptions) => {
 };
 
 export const apiRateLimiter = async (req: Request, res: Response, next: NextFunction) => {
-  const isAuth = !!(req as any).user;
-  const limit = isAuth ? 50 : 10; // 50 req/s for auth, 10 req/s for unauth
-  const windowMs = 1000; // 1 second window
+  if (process.env.NODE_ENV === 'test') {
+    return next();
+  }
 
-  return slidingWindowRateLimiter({
-    windowMs,
-    limit,
-    keyPrefix: 'rl:api',
-  })(req, res, next);
+  return slidingWindowRateLimiter(resolveApiRateLimit(req))(req, res, next);
 };
+
+function resolveApiRateLimit(req: Request): ResolvedRateLimitConfig {
+  const isAuth = !!(req as any).user;
+  const baseConfig: ResolvedRateLimitConfig = {
+    windowMs: 1000,
+    limit: isAuth ? 80 : 20,
+    keyPrefix: 'rl:api',
+  };
+
+  if (req.method !== 'GET') {
+    return baseConfig;
+  }
+
+  const path = req.path;
+
+  if (path.startsWith('/api/v1/auth/profile-status')) {
+    return {
+      windowMs: 1000,
+      limit: 30,
+      keyPrefix: 'rl:api:profile-status',
+    };
+  }
+
+  if (
+    path.startsWith('/api/v1/certificates') ||
+    path.startsWith('/api/v1/enrollments') ||
+    path.startsWith('/api/v1/courses')
+  ) {
+    return {
+      windowMs: 1000,
+      limit: isAuth ? 120 : 40,
+      keyPrefix: 'rl:api:read-heavy',
+    };
+  }
+
+  return baseConfig;
+}

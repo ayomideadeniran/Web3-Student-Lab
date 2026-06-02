@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from 'react';
 
 export interface PanelLayout {
   id: string;
@@ -12,15 +12,15 @@ export interface WorkspaceLayout {
 
 const DEFAULT_LAYOUT: WorkspaceLayout = {
   panels: [
-    { id: "stats", order: 0, colSpan: 3 },
-    { id: "courses", order: 1, colSpan: 2 },
-    { id: "certificates", order: 2, colSpan: 1 },
-    { id: "audit", order: 3, colSpan: 3 },
+    { id: 'stats', order: 0, colSpan: 3 },
+    { id: 'courses', order: 1, colSpan: 2 },
+    { id: 'certificates', order: 2, colSpan: 1 },
+    { id: 'audit', order: 3, colSpan: 3 },
   ],
 };
 
 function getStorageKey(userId?: string) {
-  return `workspace_layout_${userId ?? "guest"}`;
+  return `workspace_layout_${userId ?? 'guest'}`;
 }
 
 export function useLayoutPersistence(userId?: string) {
@@ -48,7 +48,7 @@ export function useLayoutPersistence(userId?: string) {
         // storage unavailable
       }
     },
-    [userId],
+    [userId]
   );
 
   const resetLayout = useCallback(() => {

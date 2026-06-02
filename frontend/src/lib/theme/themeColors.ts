@@ -146,10 +146,7 @@ export function getThemeStyles(theme: 'light' | 'dark') {
   Object.entries(colors).forEach(([category, colorMap]) => {
     if (typeof colorMap === 'object') {
       Object.entries(colorMap).forEach(([key, value]) => {
-        const cssVar =
-          CSS_VARIABLES[category as keyof typeof CSS_VARIABLES]?.[
-            key as any
-          ];
+        const cssVar = CSS_VARIABLES[category as keyof typeof CSS_VARIABLES]?.[key as any];
         if (cssVar) {
           vars[cssVar] = value;
         }

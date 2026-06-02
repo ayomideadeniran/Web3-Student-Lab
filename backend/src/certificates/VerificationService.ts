@@ -122,7 +122,7 @@ export class VerificationService {
         results.push({
           isValid: false,
           certificate: null,
-          status: 'REVOKED',
+          status: CertificateStatus.REVOKED,
           onChainData: null,
           message: 'Certificate has been revoked',
         });
@@ -130,7 +130,7 @@ export class VerificationService {
         results.push({
           isValid: false,
           certificate: null,
-          status: 'REISSUED',
+          status: CertificateStatus.REISSUED,
           onChainData: null,
           message: 'Certificate has been reissued',
         });
@@ -226,7 +226,7 @@ export class VerificationService {
     return {
       isValid: false,
       certificate: metadata,
-      status: 'REVOKED',
+      status: CertificateStatus.REVOKED,
       onChainData,
       revocationInfo: {
         revokedAt: certificate.revokedAt!,
@@ -261,7 +261,7 @@ export class VerificationService {
     return {
       isValid: false,
       certificate: metadata,
-      status: 'REISSUED',
+      status: CertificateStatus.REISSUED,
       onChainData,
       message: 'This certificate has been reissued. A newer version is available.',
     };

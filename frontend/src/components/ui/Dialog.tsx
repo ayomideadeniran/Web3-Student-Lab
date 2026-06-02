@@ -13,14 +13,18 @@ export function Dialog({ open, onOpenChange, children }: DialogProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="fixed inset-0 bg-black/50" onClick={() => onOpenChange?.(false)} />
-      <div className="relative bg-white rounded-lg shadow-lg p-6 max-w-md w-full mx-4">
+      <div className="relative mx-4 w-full max-w-md rounded-lg bg-white p-6 shadow-lg">
         {children}
       </div>
     </div>
   );
 }
 
-export function DialogHeader({ className, children, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+export function DialogHeader({
+  className,
+  children,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div className={cn('flex flex-col space-y-1.5 text-center sm:text-left', className)} {...props}>
       {children}
@@ -28,18 +32,46 @@ export function DialogHeader({ className, children, ...props }: React.HTMLAttrib
   );
 }
 
-export function DialogTitle({ className, children, ...props }: React.HTMLAttributes<HTMLHeadingElement>) {
+export function DialogTitle({
+  className,
+  children,
+  ...props
+}: React.HTMLAttributes<HTMLHeadingElement>) {
   return (
-    <h3 className={cn('text-lg font-semibold leading-none tracking-tight', className)} {...props}>
+    <h3 className={cn('text-lg leading-none font-semibold tracking-tight', className)} {...props}>
       {children}
     </h3>
   );
 }
 
-export function DialogContent({ className, children, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+export function DialogContent({
+  className,
+  children,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={cn('text-sm text-muted-foreground', className)} {...props}>
+    <div className={cn('text-muted-foreground text-sm', className)} {...props}>
       {children}
     </div>
   );
 }
+
+export function DialogDescription({
+  className,
+  children,
+  ...props
+}: React.HTMLAttributes<HTMLParagraphElement>) {
+  return (
+    <p className={cn('text-sm text-muted-foreground', className)} {...props}>
+      {children}
+    </p>
+  );
+}
+
+export const DialogTrigger = React.forwardRef<
+  HTMLButtonElement,
+  React.ButtonHTMLAttributes<HTMLButtonElement> & { asChild?: boolean }
+>(({ className, asChild = false, ...props }, ref) => {
+  return <button ref={ref} className={className} {...props} />;
+});
+DialogTrigger.displayName = 'DialogTrigger';

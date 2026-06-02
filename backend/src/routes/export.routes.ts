@@ -36,7 +36,8 @@ router.post('/', async (req, res) => {
 router.get('/events', (req, res) => {
   const authHeader = req.headers.authorization;
   const headerToken = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : undefined;
-  const queryToken = typeof req.query.access_token === 'string' ? req.query.access_token : undefined;
+  const queryToken =
+    typeof req.query.access_token === 'string' ? req.query.access_token : undefined;
   const token = headerToken || queryToken;
 
   if (!token) {

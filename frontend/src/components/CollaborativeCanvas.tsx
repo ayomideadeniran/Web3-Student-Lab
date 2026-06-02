@@ -1,23 +1,24 @@
 'use client';
 
 import {
-    useAwareness,
-    useCanvasCollaboration,
-    useSharedCanvas,
+  useAwareness,
+  useCanvasCollaboration,
+  useSharedCanvas,
 } from '@/hooks/useCanvasCollaboration';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import ReactFlow, {
-    Background,
-    Connection,
-    Controls,
-    EdgeChange,
-    MarkerType,
-    MiniMap,
-    NodeChange
+  Background,
+  Connection,
+  Controls,
+  EdgeChange,
+  MarkerType,
+  MiniMap,
+  NodeChange,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
+import { nodeTypes } from './whiteboard/Web3Nodes';
 
 interface CollaborativeCanvasProps {
   roomId: string;
@@ -25,16 +26,11 @@ interface CollaborativeCanvasProps {
   onCanvasReady?: () => void;
 }
 
-export function CollaborativeCanvas({
-  roomId,
-  userId,
-  onCanvasReady,
-}: CollaborativeCanvasProps) {
+export function CollaborativeCanvas({ roomId, userId, onCanvasReady }: CollaborativeCanvasProps) {
   const canvasRef = useRef<HTMLDivElement>(null);
   const [isExporting, setIsExporting] = useState(false);
 
-  const { doc, awareness, isConnected } =
-    useCanvasCollaboration(roomId, userId);
+  const { doc, awareness, isConnected } = useCanvasCollaboration(roomId, userId);
   const {
     nodes,
     edges,
@@ -53,7 +49,14 @@ export function CollaborativeCanvas({
   }, [isConnected, onCanvasReady]);
 
   const defaultNodes = useMemo(() => nodes, [nodes]);
-  const defaultEdges = useMemo(() => edges, [edges]);
+  const defaultEdges = useMemo(
+    () =>
+      edges.map((edge) => ({
+        ...edge,
+        markerEnd: edge.markerEnd ? { type: edge.markerEnd.type as any } : undefined,
+      })) as any[],
+    [edges]
+  );
 
   const handleExportImage = async () => {
     if (!canvasRef.current) return;
@@ -157,7 +160,23 @@ export function CollaborativeCanvas({
         borderRadius: shape === 'circle' ? '50%' : 12,
         padding: 18,
         width: 180,
-        height: shape === 'circle' ? 180 : undefined,
+        height: 180,
+      },
+    });
+  };
+
+  const handleAddWeb3Node = (type: 'wallet' | 'contract' | 'actor') => {
+    addNode({
+      id: `node-${Date.now()}`,
+      type: type,
+      position: {
+        x: 150 + Math.random() * 200,
+        y: 150 + Math.random() * 200,
+      },
+      data: {
+        label: type.charAt(0).toUpperCase() + type.slice(1),
+        ...(type === 'wallet' ? { address: '0x1234...abcd' } : {}),
+        ...(type === 'contract' ? { network: 'Ethereum' } : {}),
       },
     });
   };
@@ -207,16 +226,14 @@ export function CollaborativeCanvas({
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex flex-col gap-3 border-b border-gray-200 bg-white px-6 py-4 dark:border-gray-700 dark:bg-gray-900 md:flex-row md:items-center md:justify-between">
+      <div className="flex flex-col gap-3 border-b border-gray-200 bg-white px-6 py-4 md:flex-row md:items-center md:justify-between dark:border-gray-700 dark:bg-gray-900">
         <div className="space-y-2">
           <div className="flex items-center gap-3">
             <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
               Canvas: {roomId}
             </h1>
             <span
-              className={`h-3 w-3 rounded-full ${
-                isConnected ? 'bg-emerald-500' : 'bg-rose-500'
-              }`}
+              className={`h-3 w-3 rounded-full ${isConnected ? 'bg-emerald-500' : 'bg-rose-500'}`}
               title={isConnected ? 'Connected' : 'Disconnected'}
             />
           </div>
@@ -244,6 +261,26 @@ export function CollaborativeCanvas({
           >
             Add Circle
           </button>
+          <div className="h-6 w-px bg-gray-300 dark:bg-gray-600 mx-1" />
+          <button
+            onClick={() => handleAddWeb3Node('wallet')}
+            className="rounded-md bg-purple-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-purple-400"
+          >
+            Add Wallet
+          </button>
+          <button
+            onClick={() => handleAddWeb3Node('contract')}
+            className="rounded-md bg-blue-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-400"
+          >
+            Add Contract
+          </button>
+          <button
+            onClick={() => handleAddWeb3Node('actor')}
+            className="rounded-md bg-green-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-green-400"
+          >
+            Add Actor
+          </button>
+          <div className="h-6 w-px bg-gray-300 dark:bg-gray-600 mx-1" />
           <button
             onClick={handleExportImage}
             disabled={isExporting}
@@ -286,6 +323,7 @@ export function CollaborativeCanvas({
           <ReactFlow
             nodes={defaultNodes}
             edges={defaultEdges}
+            nodeTypes={nodeTypes}
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
@@ -293,10 +331,7 @@ export function CollaborativeCanvas({
             attributionPosition="bottom-left"
             className="h-full"
           >
-            <MiniMap
-              nodeStrokeColor={(n) => n.style?.background || '#888'}
-              nodeColor={(n) => n.style?.background || '#888'}
-            />
+            <MiniMap nodeStrokeColor="#888" nodeColor="#888" />
             <Controls />
             <Background color="#888" gap={16} size={1} />
           </ReactFlow>

@@ -87,8 +87,7 @@ export const useGlobalStore = create<GlobalStore>()(
 
         setOnlineStatus: (isOnline) => set({ isOnline }),
 
-        setGlobalLoading: (globalLoading, loadingMessage) =>
-          set({ globalLoading, loadingMessage }),
+        setGlobalLoading: (globalLoading, loadingMessage) => set({ globalLoading, loadingMessage }),
 
         setGlobalError: (globalError) => set({ globalError }),
 
@@ -161,8 +160,11 @@ export const useGlobalStore = create<GlobalStore>()(
             // Import individual store states
             if (state.auth) {
               const authStore = useAuthStore.getState();
-              Object.keys(state.auth).forEach(key => {
-                if (key in authStore && typeof authStore[key as keyof typeof authStore] === 'function') {
+              Object.keys(state.auth).forEach((key) => {
+                if (
+                  key in authStore &&
+                  typeof authStore[key as keyof typeof authStore] === 'function'
+                ) {
                   // Skip functions, only set state properties
                 }
               });
@@ -170,8 +172,11 @@ export const useGlobalStore = create<GlobalStore>()(
 
             if (state.editor) {
               const editorStore = useEditorStore.getState();
-              Object.keys(state.editor).forEach(key => {
-                if (key in editorStore && typeof editorStore[key as keyof typeof editorStore] === 'function') {
+              Object.keys(state.editor).forEach((key) => {
+                if (
+                  key in editorStore &&
+                  typeof editorStore[key as keyof typeof editorStore] === 'function'
+                ) {
                   // Skip functions, only set state properties
                 }
               });
@@ -179,8 +184,11 @@ export const useGlobalStore = create<GlobalStore>()(
 
             if (state.network) {
               const networkStore = useNetworkStore.getState();
-              Object.keys(state.network).forEach(key => {
-                if (key in networkStore && typeof networkStore[key as keyof typeof networkStore] === 'function') {
+              Object.keys(state.network).forEach((key) => {
+                if (
+                  key in networkStore &&
+                  typeof networkStore[key as keyof typeof networkStore] === 'function'
+                ) {
                   // Skip functions, only set state properties
                 }
               });
@@ -188,8 +196,11 @@ export const useGlobalStore = create<GlobalStore>()(
 
             if (state.user) {
               const userStore = useUserStore.getState();
-              Object.keys(state.user).forEach(key => {
-                if (key in userStore && typeof userStore[key as keyof typeof userStore] === 'function') {
+              Object.keys(state.user).forEach((key) => {
+                if (
+                  key in userStore &&
+                  typeof userStore[key as keyof typeof userStore] === 'function'
+                ) {
                   // Skip functions, only set state properties
                 }
               });
@@ -260,5 +271,6 @@ export const useGlobalFeatures = () => useGlobalStore((state) => state.features)
 export const useGlobalPerformance = () => useGlobalStore((state) => state.performance);
 
 // Computed selectors
-export const useIsDevelopment = () => useGlobalStore((state) => state.environment === 'development');
+export const useIsDevelopment = () =>
+  useGlobalStore((state) => state.environment === 'development');
 export const useIsProduction = () => useGlobalStore((state) => state.environment === 'production');

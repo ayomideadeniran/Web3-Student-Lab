@@ -102,6 +102,7 @@ export class CertificateService {
           contractAddress: mintResult.contractAddress,
           status: 'ACTIVE',
           metadataUri: metadata.image,
+          tokenId: mintResult.tokenId || tokenIdValue,
         },
       });
 
@@ -109,6 +110,7 @@ export class CertificateService {
       certificate.certificateHash = mintResult.transactionHash;
       certificate.contractAddress = mintResult.contractAddress;
       certificate.status = 'ACTIVE' as any;
+      certificate.tokenId = mintResult.tokenId || tokenIdValue;
 
       logger.info(`Certificate minted on-chain: ${certificateId} -> token ${mintResult.tokenId}`, {
         certificateId,
@@ -216,7 +218,7 @@ export class CertificateService {
     };
 
     const result: VerificationResult = {
-      isValid: true,
+      isValid: certificate.status === 'ACTIVE',
       certificate: metadata,
       status: certificate.status as any,
       onChainData,
@@ -237,6 +239,10 @@ export class CertificateService {
    * Batch verification for multiple certificates
    */
   async batchVerify(tokenIds: string[]): Promise<VerificationResult[]> {
+    if (tokenIds.length > 100) {
+      throw new Error('Maximum 100 certificates allowed per batch verification');
+    }
+
     const certificates = await prisma.certificate.findMany({
       where: {
         tokenId: {
@@ -288,7 +294,7 @@ export class CertificateService {
       };
 
       results.push({
-        isValid: true,
+        isValid: cert.status === 'ACTIVE',
         certificate: metadata,
         status: cert.status as any,
         onChainData,
@@ -307,6 +313,8 @@ export class CertificateService {
       include: {
         student: {
           select: {
+            id: true,
+            email: true,
             walletAddress: true,
             did: true,
             firstName: true,
@@ -333,6 +341,8 @@ export class CertificateService {
       include: {
         student: {
           select: {
+            id: true,
+            email: true,
             walletAddress: true,
             did: true,
             firstName: true,
@@ -355,6 +365,8 @@ export class CertificateService {
       include: {
         student: {
           select: {
+            id: true,
+            email: true,
             walletAddress: true,
             did: true,
             firstName: true,
@@ -381,8 +393,12 @@ export class CertificateService {
       include: {
         student: {
           select: {
+            id: true,
+            email: true,
             walletAddress: true,
             did: true,
+            firstName: true,
+            lastName: true,
           },
         },
         course: true,
@@ -406,8 +422,12 @@ export class CertificateService {
         include: {
           student: {
             select: {
+              id: true,
+              email: true,
               walletAddress: true,
               did: true,
+              firstName: true,
+              lastName: true,
             },
           },
           course: true,
@@ -464,6 +484,40 @@ export class CertificateService {
       issuedThisWeek: 0,
       issuedToday: 0,
     };
+  }
+
+  /**
+   * Revokes a certificate by ID (delegated to RevocationService)
+   */
+  async revokeCertificate(
+    certificateId: string,
+    reason: string,
+    revokedBy: string
+  ): Promise<Certificate> {
+    const { revocationService } = await import('./RevocationService.js');
+    return revocationService.revokeCertificate(certificateId, {
+      certificateId,
+      reason,
+      revokedBy,
+    });
+  }
+
+  /**
+   * Reissues a certificate (delegated to RevocationService)
+   */
+  async reissueCertificate(
+    certificateId: string,
+    reason: string,
+    newGrade: string,
+    issuedBy: string
+  ): Promise<{ original: Certificate; new: Certificate }> {
+    const { revocationService } = await import('./RevocationService.js');
+    return revocationService.reissueCertificate({
+      certificateId,
+      reason,
+      newGrade,
+      issuedBy,
+    });
   }
 
   /**

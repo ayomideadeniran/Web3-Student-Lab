@@ -18,10 +18,7 @@ router.get('/', async (req: Request, res: Response) => {
 
     const canvases = await prisma.canvas.findMany({
       where: {
-        OR: [
-          { studentId: userId },
-          { collaborators: { has: userId } },
-        ],
+        OR: [{ studentId: userId }, { collaborators: { has: userId } }],
       },
       orderBy: { updatedAt: 'desc' },
       select: {
@@ -116,9 +113,7 @@ router.get('/room/:roomId', async (req: Request, res: Response) => {
     }
 
     const hasAccess =
-      canvas.studentId === userId ||
-      canvas.collaborators.includes(userId || '') ||
-      canvas.isPublic;
+      canvas.studentId === userId || canvas.collaborators.includes(userId || '') || canvas.isPublic;
 
     if (!hasAccess) {
       return res.status(403).json({ error: 'Access denied' });
@@ -157,9 +152,7 @@ router.get('/:id', async (req: Request, res: Response) => {
 
     // Check access: owner or collaborator or public
     const hasAccess =
-      canvas.studentId === userId ||
-      canvas.collaborators.includes(userId || '') ||
-      canvas.isPublic;
+      canvas.studentId === userId || canvas.collaborators.includes(userId || '') || canvas.isPublic;
 
     if (!hasAccess) {
       return res.status(403).json({ error: 'Access denied' });
@@ -338,9 +331,7 @@ router.post('/:id/export', async (req: Request, res: Response) => {
 
     // Check access: owner or collaborator or public
     const hasAccess =
-      canvas.studentId === userId ||
-      canvas.collaborators.includes(userId || '') ||
-      canvas.isPublic;
+      canvas.studentId === userId || canvas.collaborators.includes(userId || '') || canvas.isPublic;
 
     if (!hasAccess) {
       return res.status(403).json({ error: 'Access denied' });

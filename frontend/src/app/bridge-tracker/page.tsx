@@ -1,28 +1,34 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Progress } from "@/components/ui/progress";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { 
-  ArrowRightLeft, 
-  Clock, 
-  CheckCircle, 
-  XCircle, 
-  AlertTriangle, 
+import { useState, useEffect } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import { Label } from '@/components/ui/Label';
+import { Badge } from '@/components/ui/Badge';
+import { Alert, AlertDescription } from '@/components/ui/Alert';
+import { Progress } from '@/components/ui/Progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
+import {
+  ArrowRightLeft,
+  Clock,
+  CheckCircle,
+  XCircle,
+  AlertTriangle,
   ExternalLink,
   RefreshCw,
   HelpCircle,
-  Loader2
-} from "lucide-react";
+  Loader2,
+} from 'lucide-react';
 
-type BridgeStatus = "initiated" | "pending_anchor" | "on_chain" | "completed" | "failed" | "refunded";
+type BridgeStatus =
+  | 'initiated'
+  | 'pending_anchor'
+  | 'on_chain'
+  | 'completed'
+  | 'failed'
+  | 'refunded';
 
 interface BridgeTransaction {
   id: string;
@@ -46,7 +52,7 @@ interface BridgeStep {
   key: string;
   title: string;
   description: string;
-  status: "pending" | "active" | "completed" | "error";
+  status: 'pending' | 'active' | 'completed' | 'error';
   timestamp?: Date;
   txHash?: string;
   explorerUrl?: string;
@@ -54,65 +60,65 @@ interface BridgeStep {
 
 const MOCK_TRANSACTIONS: BridgeTransaction[] = [
   {
-    id: "bridge_001",
-    sourceChain: "Stellar",
-    targetChain: "Ethereum",
-    amount: "100.00",
-    asset: "USDC",
-    sender: "GBX...123",
-    recipient: "0x742d...892",
-    status: "completed",
+    id: 'bridge_001',
+    sourceChain: 'Stellar',
+    targetChain: 'Ethereum',
+    amount: '100.00',
+    asset: 'USDC',
+    sender: 'GBX...123',
+    recipient: '0x742d...892',
+    status: 'completed',
     timestamp: new Date(Date.now() - 3600000),
-    sourceTxHash: "stellar_tx_hash_001",
-    targetTxHash: "0xabcdef123456789",
-    estimatedCompletion: new Date(Date.now() - 1800000)
+    sourceTxHash: 'stellar_tx_hash_001',
+    targetTxHash: '0xabcdef123456789',
+    estimatedCompletion: new Date(Date.now() - 1800000),
   },
   {
-    id: "bridge_002",
-    sourceChain: "Ethereum",
-    targetChain: "Stellar",
-    amount: "0.5",
-    asset: "ETH",
-    sender: "0x1234...5678",
-    recipient: "GDX...456",
-    status: "on_chain",
+    id: 'bridge_002',
+    sourceChain: 'Ethereum',
+    targetChain: 'Stellar',
+    amount: '0.5',
+    asset: 'ETH',
+    sender: '0x1234...5678',
+    recipient: 'GDX...456',
+    status: 'on_chain',
     timestamp: new Date(Date.now() - 1800000),
-    sourceTxHash: "0x123456789abcdef",
-    estimatedCompletion: new Date(Date.now() + 900000)
+    sourceTxHash: '0x123456789abcdef',
+    estimatedCompletion: new Date(Date.now() + 900000),
   },
   {
-    id: "bridge_003",
-    sourceChain: "Stellar",
-    targetChain: "Polygon",
-    amount: "250.00",
-    asset: "USDC",
-    sender: "GAX...789",
-    recipient: "0x9876...5432",
-    status: "pending_anchor",
+    id: 'bridge_003',
+    sourceChain: 'Stellar',
+    targetChain: 'Polygon',
+    amount: '250.00',
+    asset: 'USDC',
+    sender: 'GAX...789',
+    recipient: '0x9876...5432',
+    status: 'pending_anchor',
     timestamp: new Date(Date.now() - 600000),
-    sourceTxHash: "stellar_tx_hash_003",
-    estimatedCompletion: new Date(Date.now() + 2400000)
+    sourceTxHash: 'stellar_tx_hash_003',
+    estimatedCompletion: new Date(Date.now() + 2400000),
   },
   {
-    id: "bridge_004",
-    sourceChain: "Stellar",
-    targetChain: "Ethereum",
-    amount: "50.00",
-    asset: "USDC",
-    sender: "GTX...321",
-    recipient: "0x5555...6666",
-    status: "failed",
+    id: 'bridge_004',
+    sourceChain: 'Stellar',
+    targetChain: 'Ethereum',
+    amount: '50.00',
+    asset: 'USDC',
+    sender: 'GTX...321',
+    recipient: '0x5555...6666',
+    status: 'failed',
     timestamp: new Date(Date.now() - 7200000),
-    sourceTxHash: "stellar_tx_hash_004",
-    errorMessage: "Anchor timeout - no response received",
-    refundTxHash: "stellar_refund_hash_004"
-  }
+    sourceTxHash: 'stellar_tx_hash_004',
+    errorMessage: 'Anchor timeout - no response received',
+    refundTxHash: 'stellar_refund_hash_004',
+  },
 ];
 
 export default function BridgeTransactionTracker() {
   const [transactions, setTransactions] = useState<BridgeTransaction[]>(MOCK_TRANSACTIONS);
   const [selectedTransaction, setSelectedTransaction] = useState<BridgeTransaction | null>(null);
-  const [searchId, setSearchId] = useState("");
+  const [searchId, setSearchId] = useState('');
   const [loading, setLoading] = useState(false);
   const [autoRefresh, setAutoRefresh] = useState(false);
   const [showHelpDialog, setShowHelpDialog] = useState(false);
@@ -133,23 +139,25 @@ export default function BridgeTransactionTracker() {
     try {
       // TODO: Replace with actual API calls to bridge service
       // This would poll SEP-24/SEP-6 endpoints for status updates
-      
+
       // Simulate API call with random status changes
-      setTransactions(prev => prev.map(tx => {
-        if (tx.status === "pending_anchor" && Math.random() > 0.7) {
-          return { ...tx, status: "on_chain" as BridgeStatus };
-        }
-        if (tx.status === "on_chain" && Math.random() > 0.8) {
-          return { 
-            ...tx, 
-            status: "completed" as BridgeStatus,
-            targetTxHash: "0x" + Math.random().toString(16).substring(2, 66)
-          };
-        }
-        return tx;
-      }));
+      setTransactions((prev) =>
+        prev.map((tx) => {
+          if (tx.status === 'pending_anchor' && Math.random() > 0.7) {
+            return { ...tx, status: 'on_chain' as BridgeStatus };
+          }
+          if (tx.status === 'on_chain' && Math.random() > 0.8) {
+            return {
+              ...tx,
+              status: 'completed' as BridgeStatus,
+              targetTxHash: '0x' + Math.random().toString(16).substring(2, 66),
+            };
+          }
+          return tx;
+        })
+      );
     } catch (error) {
-      console.error("Error refreshing transactions:", error);
+      console.error('Error refreshing transactions:', error);
     } finally {
       setLoading(false);
     }
@@ -158,122 +166,132 @@ export default function BridgeTransactionTracker() {
   const getBridgeSteps = (transaction: BridgeTransaction): BridgeStep[] => {
     const steps: BridgeStep[] = [
       {
-        key: "initiated",
-        title: "Transaction Initiated",
-        description: "Bridge transaction started on source chain",
-        status: transaction.status !== "initiated" ? "completed" : "active",
+        key: 'initiated',
+        title: 'Transaction Initiated',
+        description: 'Bridge transaction started on source chain',
+        status: transaction.status !== 'initiated' ? 'completed' : 'active',
         timestamp: transaction.timestamp,
         txHash: transaction.sourceTxHash,
-        explorerUrl: transaction.sourceTxHash ? getExplorerUrl(transaction.sourceChain, transaction.sourceTxHash) : undefined
+        explorerUrl: transaction.sourceTxHash
+          ? getExplorerUrl(transaction.sourceChain, transaction.sourceTxHash)
+          : undefined,
       },
       {
-        key: "pending_anchor",
-        title: "Pending Anchor",
-        description: "Waiting for anchor to process the transfer",
-        status: getStepStatus(transaction, "pending_anchor"),
-        timestamp: transaction.status === "pending_anchor" ? new Date() : undefined
+        key: 'pending_anchor',
+        title: 'Pending Anchor',
+        description: 'Waiting for anchor to process the transfer',
+        status: getStepStatus(transaction, 'pending_anchor'),
+        timestamp: transaction.status === 'pending_anchor' ? new Date() : undefined,
       },
       {
-        key: "on_chain",
-        title: "On Target Chain",
-        description: "Transaction submitted to target chain",
-        status: getStepStatus(transaction, "on_chain"),
+        key: 'on_chain',
+        title: 'On Target Chain',
+        description: 'Transaction submitted to target chain',
+        status: getStepStatus(transaction, 'on_chain'),
         txHash: transaction.targetTxHash,
-        explorerUrl: transaction.targetTxHash ? getExplorerUrl(transaction.targetChain, transaction.targetTxHash) : undefined
+        explorerUrl: transaction.targetTxHash
+          ? getExplorerUrl(transaction.targetChain, transaction.targetTxHash)
+          : undefined,
       },
       {
-        key: "completed",
-        title: "Completed",
-        description: "Bridge transaction completed successfully",
-        status: transaction.status === "completed" ? "completed" : 
-                transaction.status === "failed" || transaction.status === "refunded" ? "error" : "pending"
-      }
+        key: 'completed',
+        title: 'Completed',
+        description: 'Bridge transaction completed successfully',
+        status:
+          transaction.status === 'completed'
+            ? 'completed'
+            : transaction.status === 'failed' || transaction.status === 'refunded'
+              ? 'error'
+              : 'pending',
+      },
     ];
 
     // Add error step if failed
-    if (transaction.status === "failed" || transaction.status === "refunded") {
+    if (transaction.status === 'failed' || transaction.status === 'refunded') {
       steps.push({
-        key: "error",
-        title: transaction.status === "refunded" ? "Refunded" : "Failed",
-        description: transaction.errorMessage || "Transaction failed",
-        status: "error",
+        key: 'error',
+        title: transaction.status === 'refunded' ? 'Refunded' : 'Failed',
+        description: transaction.errorMessage || 'Transaction failed',
+        status: 'error',
         txHash: transaction.refundTxHash,
-        explorerUrl: transaction.refundTxHash ? getExplorerUrl(transaction.sourceChain, transaction.refundTxHash) : undefined
+        explorerUrl: transaction.refundTxHash
+          ? getExplorerUrl(transaction.sourceChain, transaction.refundTxHash)
+          : undefined,
       });
     }
 
     return steps;
   };
 
-  const getStepStatus = (transaction: BridgeTransaction, stepKey: string): BridgeStep["status"] => {
+  const getStepStatus = (transaction: BridgeTransaction, stepKey: string): BridgeStep['status'] => {
     const statusOrder: Record<BridgeStatus, number> = {
-      "initiated": 0,
-      "pending_anchor": 1,
-      "on_chain": 2,
-      "completed": 3,
-      "failed": -1,
-      "refunded": -1
+      initiated: 0,
+      pending_anchor: 1,
+      on_chain: 2,
+      completed: 3,
+      failed: -1,
+      refunded: -1,
     };
 
     const currentStatusIndex = statusOrder[transaction.status];
     const stepIndex = statusOrder[stepKey as BridgeStatus] || 0;
 
-    if (transaction.status === "failed" || transaction.status === "refunded") {
-      return "error";
+    if (transaction.status === 'failed' || transaction.status === 'refunded') {
+      return 'error';
     }
 
     if (currentStatusIndex > stepIndex) {
-      return "completed";
+      return 'completed';
     } else if (currentStatusIndex === stepIndex) {
-      return "active";
+      return 'active';
     } else {
-      return "pending";
+      return 'pending';
     }
   };
 
   const getExplorerUrl = (chain: string, txHash: string): string => {
     const explorers: Record<string, string> = {
-      "Stellar": `https://stellar.expert/explorer/testnet/tx/${txHash}`,
-      "Ethereum": `https://sepolia.etherscan.io/tx/${txHash}`,
-      "Polygon": `https://mumbai.polygonscan.com/tx/${txHash}`,
-      "Arbitrum": `https://sepolia.arbiscan.io/tx/${txHash}`,
-      "Optimism": `https://sepolia-optimism.etherscan.io/tx/${txHash}`
+      Stellar: `https://stellar.expert/explorer/testnet/tx/${txHash}`,
+      Ethereum: `https://sepolia.etherscan.io/tx/${txHash}`,
+      Polygon: `https://mumbai.polygonscan.com/tx/${txHash}`,
+      Arbitrum: `https://sepolia.arbiscan.io/tx/${txHash}`,
+      Optimism: `https://sepolia-optimism.etherscan.io/tx/${txHash}`,
     };
-    return explorers[chain] || "#";
+    return explorers[chain] || '#';
   };
 
   const getStatusColor = (status: BridgeStatus): string => {
     switch (status) {
-      case "completed":
-        return "bg-green-500";
-      case "on_chain":
-        return "bg-blue-500";
-      case "pending_anchor":
-        return "bg-yellow-500";
-      case "initiated":
-        return "bg-gray-500";
-      case "failed":
-        return "bg-red-500";
-      case "refunded":
-        return "bg-orange-500";
+      case 'completed':
+        return 'bg-green-500';
+      case 'on_chain':
+        return 'bg-blue-500';
+      case 'pending_anchor':
+        return 'bg-yellow-500';
+      case 'initiated':
+        return 'bg-gray-500';
+      case 'failed':
+        return 'bg-red-500';
+      case 'refunded':
+        return 'bg-orange-500';
       default:
-        return "bg-gray-500";
+        return 'bg-gray-500';
     }
   };
 
   const getStatusIcon = (status: BridgeStatus) => {
     switch (status) {
-      case "completed":
+      case 'completed':
         return <CheckCircle className="h-4 w-4 text-green-600" />;
-      case "on_chain":
+      case 'on_chain':
         return <Loader2 className="h-4 w-4 text-blue-600 animate-spin" />;
-      case "pending_anchor":
+      case 'pending_anchor':
         return <Clock className="h-4 w-4 text-yellow-600" />;
-      case "initiated":
+      case 'initiated':
         return <Clock className="h-4 w-4 text-gray-600" />;
-      case "failed":
+      case 'failed':
         return <XCircle className="h-4 w-4 text-red-600" />;
-      case "refunded":
+      case 'refunded':
         return <AlertTriangle className="h-4 w-4 text-orange-600" />;
       default:
         return <Clock className="h-4 w-4 text-gray-600" />;
@@ -282,20 +300,21 @@ export default function BridgeTransactionTracker() {
 
   const getProgressPercentage = (transaction: BridgeTransaction): number => {
     const statusProgress: Record<BridgeStatus, number> = {
-      "initiated": 25,
-      "pending_anchor": 50,
-      "on_chain": 75,
-      "completed": 100,
-      "failed": 0,
-      "refunded": 0
+      initiated: 25,
+      pending_anchor: 50,
+      on_chain: 75,
+      completed: 100,
+      failed: 0,
+      refunded: 0,
     };
     return statusProgress[transaction.status];
   };
 
-  const filteredTransactions = transactions.filter(tx => 
-    tx.id.toLowerCase().includes(searchId.toLowerCase()) ||
-    tx.sender.toLowerCase().includes(searchId.toLowerCase()) ||
-    tx.recipient.toLowerCase().includes(searchId.toLowerCase())
+  const filteredTransactions = transactions.filter(
+    (tx) =>
+      tx.id.toLowerCase().includes(searchId.toLowerCase()) ||
+      tx.sender.toLowerCase().includes(searchId.toLowerCase()) ||
+      tx.recipient.toLowerCase().includes(searchId.toLowerCase())
   );
 
   const selectedSteps = selectedTransaction ? getBridgeSteps(selectedTransaction) : [];
@@ -310,38 +329,40 @@ export default function BridgeTransactionTracker() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setAutoRefresh(!autoRefresh)}
-          >
+          <Button variant="outline" size="sm" onClick={() => setAutoRefresh(!autoRefresh)}>
             <RefreshCw className={`mr-2 h-4 w-4 ${autoRefresh ? 'animate-spin' : ''}`} />
-            {autoRefresh ? "Auto-refreshing" : "Auto-refresh"}
+            {autoRefresh ? 'Auto-refreshing' : 'Auto-refresh'}
           </Button>
           <Dialog open={showHelpDialog} onOpenChange={setShowHelpDialog}>
-            <DialogTrigger asChild>
-              <Button variant="outline" size="sm">
-                <HelpCircle className="mr-2 h-4 w-4" />
-                Need Help?
-              </Button>
-            </DialogTrigger>
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>Bridge Transaction Help</DialogTitle>
-                <DialogDescription>
+                <p className="text-sm text-muted-foreground mt-2">
                   Learn how to track your cross-chain bridge transactions
-                </DialogDescription>
+                </p>
               </DialogHeader>
               <div className="space-y-4">
                 <div>
                   <h4 className="font-semibold">Transaction Statuses</h4>
                   <ul className="text-sm text-muted-foreground space-y-1">
-                    <li>• <strong>Initiated:</strong> Transaction started on source chain</li>
-                    <li>• <strong>Pending Anchor:</strong> Waiting for anchor processing</li>
-                    <li>• <strong>On Chain:</strong> Submitted to target chain</li>
-                    <li>• <strong>Completed:</strong> Successfully bridged</li>
-                    <li>• <strong>Failed:</strong> Transaction failed</li>
-                    <li>• <strong>Refunded:</strong> Funds were refunded</li>
+                    <li>
+                      • <strong>Initiated:</strong> Transaction started on source chain
+                    </li>
+                    <li>
+                      • <strong>Pending Anchor:</strong> Waiting for anchor processing
+                    </li>
+                    <li>
+                      • <strong>On Chain:</strong> Submitted to target chain
+                    </li>
+                    <li>
+                      • <strong>Completed:</strong> Successfully bridged
+                    </li>
+                    <li>
+                      • <strong>Failed:</strong> Transaction failed
+                    </li>
+                    <li>
+                      • <strong>Refunded:</strong> Funds were refunded
+                    </li>
                   </ul>
                 </div>
                 <div>
@@ -370,9 +391,7 @@ export default function BridgeTransactionTracker() {
               <ArrowRightLeft className="h-5 w-5" />
               Bridge Transactions
             </CardTitle>
-            <CardDescription>
-              Click a transaction to view detailed status
-            </CardDescription>
+            <CardDescription>Click a transaction to view detailed status</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="space-y-2">
@@ -384,15 +403,15 @@ export default function BridgeTransactionTracker() {
                 onChange={(e) => setSearchId(e.target.value)}
               />
             </div>
-            
+
             <div className="space-y-2 max-h-96 overflow-y-auto">
               {filteredTransactions.map((transaction) => (
                 <div
                   key={transaction.id}
                   className={`p-3 border rounded-lg cursor-pointer transition-colors ${
                     selectedTransaction?.id === transaction.id
-                      ? "border-primary bg-primary/5"
-                      : "border-border hover:bg-muted/50"
+                      ? 'border-primary bg-primary/5'
+                      : 'border-border hover:bg-muted/50'
                   }`}
                   onClick={() => setSelectedTransaction(transaction)}
                 >
@@ -402,12 +421,16 @@ export default function BridgeTransactionTracker() {
                       <span className="font-semibold text-sm">{transaction.id}</span>
                     </div>
                     <Badge variant="secondary" className="text-xs">
-                      {transaction.status.replace("_", " ")}
+                      {transaction.status.replace('_', ' ')}
                     </Badge>
                   </div>
                   <div className="text-xs text-muted-foreground space-y-1">
-                    <div>{transaction.amount} {transaction.asset}</div>
-                    <div>{transaction.sourceChain} → {transaction.targetChain}</div>
+                    <div>
+                      {transaction.amount} {transaction.asset}
+                    </div>
+                    <div>
+                      {transaction.sourceChain} → {transaction.targetChain}
+                    </div>
                     <div>{transaction.timestamp.toLocaleTimeString()}</div>
                   </div>
                   <div className="mt-2">
@@ -429,7 +452,8 @@ export default function BridgeTransactionTracker() {
                   Transaction Details - {selectedTransaction.id}
                 </CardTitle>
                 <CardDescription>
-                  {selectedTransaction.amount} {selectedTransaction.asset} from {selectedTransaction.sourceChain} to {selectedTransaction.targetChain}
+                  {selectedTransaction.amount} {selectedTransaction.asset} from{' '}
+                  {selectedTransaction.sourceChain} to {selectedTransaction.targetChain}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -439,34 +463,44 @@ export default function BridgeTransactionTracker() {
                     <TabsTrigger value="details">Details</TabsTrigger>
                     <TabsTrigger value="explorers">Explorers</TabsTrigger>
                   </TabsList>
-                  
+
                   <TabsContent value="progress" className="space-y-4">
                     <div className="space-y-4">
                       {selectedSteps.map((step, index) => (
                         <div key={step.key} className="flex items-start gap-4">
                           <div className="flex-shrink-0">
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                              step.status === "completed" ? "bg-green-100 text-green-600" :
-                              step.status === "active" ? "bg-blue-100 text-blue-600" :
-                              step.status === "error" ? "bg-red-100 text-red-600" :
-                              "bg-gray-100 text-gray-400"
-                            }`}>
-                              {step.status === "completed" ? <CheckCircle className="h-4 w-4" /> :
-                               step.status === "active" ? <Loader2 className="h-4 w-4 animate-spin" /> :
-                               step.status === "error" ? <XCircle className="h-4 w-4" /> :
-                               <Clock className="h-4 w-4" />}
+                            <div
+                              className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                                step.status === 'completed'
+                                  ? 'bg-green-100 text-green-600'
+                                  : step.status === 'active'
+                                    ? 'bg-blue-100 text-blue-600'
+                                    : step.status === 'error'
+                                      ? 'bg-red-100 text-red-600'
+                                      : 'bg-gray-100 text-gray-400'
+                              }`}
+                            >
+                              {step.status === 'completed' ? (
+                                <CheckCircle className="h-4 w-4" />
+                              ) : step.status === 'active' ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : step.status === 'error' ? (
+                                <XCircle className="h-4 w-4" />
+                              ) : (
+                                <Clock className="h-4 w-4" />
+                              )}
                             </div>
                             {index < selectedSteps.length - 1 && (
-                              <div className={`w-0.5 h-8 ml-4 mt-2 ${
-                                step.status === "completed" ? "bg-green-200" : "bg-gray-200"
-                              }`} />
+                              <div
+                                className={`w-0.5 h-8 ml-4 mt-2 ${
+                                  step.status === 'completed' ? 'bg-green-200' : 'bg-gray-200'
+                                }`}
+                              />
                             )}
                           </div>
                           <div className="flex-grow">
                             <div className="font-semibold">{step.title}</div>
-                            <div className="text-sm text-muted-foreground">
-                              {step.description}
-                            </div>
+                            <div className="text-sm text-muted-foreground">{step.description}</div>
                             {step.timestamp && (
                               <div className="text-xs text-muted-foreground mt-1">
                                 {step.timestamp.toLocaleString()}
@@ -491,17 +525,18 @@ export default function BridgeTransactionTracker() {
                         </div>
                       ))}
                     </div>
-                    
+
                     {selectedTransaction.estimatedCompletion && (
                       <Alert>
                         <Clock className="h-4 w-4" />
                         <AlertDescription>
-                          Estimated completion: {selectedTransaction.estimatedCompletion.toLocaleString()}
+                          Estimated completion:{' '}
+                          {selectedTransaction.estimatedCompletion.toLocaleString()}
                         </AlertDescription>
                       </Alert>
                     )}
                   </TabsContent>
-                  
+
                   <TabsContent value="details" className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                       <div>
@@ -512,12 +547,16 @@ export default function BridgeTransactionTracker() {
                         <Label>Status</Label>
                         <div className="flex items-center gap-2">
                           {getStatusIcon(selectedTransaction.status)}
-                          <span className="capitalize">{selectedTransaction.status.replace("_", " ")}</span>
+                          <span className="capitalize">
+                            {selectedTransaction.status.replace('_', ' ')}
+                          </span>
                         </div>
                       </div>
                       <div>
                         <Label>Amount</Label>
-                        <p className="font-semibold">{selectedTransaction.amount} {selectedTransaction.asset}</p>
+                        <p className="font-semibold">
+                          {selectedTransaction.amount} {selectedTransaction.asset}
+                        </p>
                       </div>
                       <div>
                         <Label>Started</Label>
@@ -540,17 +579,15 @@ export default function BridgeTransactionTracker() {
                         <p className="font-mono text-sm">{selectedTransaction.recipient}</p>
                       </div>
                     </div>
-                    
+
                     {selectedTransaction.errorMessage && (
                       <Alert variant="destructive">
                         <XCircle className="h-4 w-4" />
-                        <AlertDescription>
-                          {selectedTransaction.errorMessage}
-                        </AlertDescription>
+                        <AlertDescription>{selectedTransaction.errorMessage}</AlertDescription>
                       </Alert>
                     )}
                   </TabsContent>
-                  
+
                   <TabsContent value="explorers" className="space-y-4">
                     <div className="space-y-3">
                       {selectedTransaction.sourceTxHash && (
@@ -564,20 +601,26 @@ export default function BridgeTransactionTracker() {
                               {selectedTransaction.sourceTxHash}
                             </div>
                           </div>
-                          <Button variant="outline" size="sm" asChild>
-                            <a
-                              href={getExplorerUrl(selectedTransaction.sourceChain, selectedTransaction.sourceTxHash)}
-                              target="_blank"
-                              rel="noopener noreferrer"
+                          {selectedTransaction.sourceTxHash && selectedTransaction.sourceChain && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                const url = getExplorerUrl(
+                                  selectedTransaction.sourceChain,
+                                  selectedTransaction.sourceTxHash ?? ''
+                                );
+                                if (url) window.open(url, '_blank');
+                              }}
                             >
                               <ExternalLink className="h-4 w-4 mr-2" />
                               View
-                            </a>
-                          </Button>
+                            </Button>
+                          )}
                         </div>
                       )}
-                      
-                      {selectedTransaction.targetTxHash && (
+
+                      {selectedTransaction.targetTxHash && selectedTransaction.targetChain && (
                         <div className="flex items-center justify-between p-3 border rounded-lg">
                           <div>
                             <div className="font-semibold">Target Transaction</div>
@@ -588,20 +631,26 @@ export default function BridgeTransactionTracker() {
                               {selectedTransaction.targetTxHash}
                             </div>
                           </div>
-                          <Button variant="outline" size="sm" asChild>
-                            <a
-                              href={getExplorerUrl(selectedTransaction.targetChain, selectedTransaction.targetTxHash)}
-                              target="_blank"
-                              rel="noopener noreferrer"
+                          {selectedTransaction.targetTxHash && selectedTransaction.targetChain && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                const url = getExplorerUrl(
+                                  selectedTransaction.targetChain,
+                                  selectedTransaction.targetTxHash ?? ''
+                                );
+                                if (url) window.open(url, '_blank');
+                              }}
                             >
                               <ExternalLink className="h-4 w-4 mr-2" />
                               View
-                            </a>
-                          </Button>
+                            </Button>
+                          )}
                         </div>
                       )}
-                      
-                      {selectedTransaction.refundTxHash && (
+
+                      {selectedTransaction.refundTxHash && selectedTransaction.sourceChain && (
                         <div className="flex items-center justify-between p-3 border rounded-lg">
                           <div>
                             <div className="font-semibold">Refund Transaction</div>
@@ -612,16 +661,22 @@ export default function BridgeTransactionTracker() {
                               {selectedTransaction.refundTxHash}
                             </div>
                           </div>
-                          <Button variant="outline" size="sm" asChild>
-                            <a
-                              href={getExplorerUrl(selectedTransaction.sourceChain, selectedTransaction.refundTxHash)}
-                              target="_blank"
-                              rel="noopener noreferrer"
+                          {selectedTransaction.refundTxHash && selectedTransaction.sourceChain && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                const url = getExplorerUrl(
+                                  selectedTransaction.sourceChain,
+                                  selectedTransaction.refundTxHash ?? ''
+                                );
+                                if (url) window.open(url, '_blank');
+                              }}
                             >
                               <ExternalLink className="h-4 w-4 mr-2" />
                               View
-                            </a>
-                          </Button>
+                            </Button>
+                          )}
                         </div>
                       )}
                     </div>
