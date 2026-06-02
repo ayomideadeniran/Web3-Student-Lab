@@ -46,6 +46,22 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
 }) => {
   const [editorInstance, setEditorInstance] = useState<editor.IStandaloneCodeEditor | null>(null);
   const [code, setCode] = useState(DEFAULT_CODE);
+  const [isMobile, setIsMobile] = React.useState(mobileMode);
+
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (mobileMode) {
+      setIsMobile(true);
+      return;
+    }
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, [mobileMode]);
+
   const collaboratorLabel = useMemo(() => {
     if (collaborationProvider) {
       return 'Connected';
@@ -108,14 +124,21 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
           onMount={handleEditorDidMount}
           options={{
             minimap: { enabled: false },
-            fontSize: mobileMode ? 12 : 14,
+            fontSize: isMobile ? 12 : 14,
             fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
             fontLigatures: true,
             automaticLayout: true,
-            padding: { top: mobileMode ? 20 : 24 },
+            padding: { top: isMobile ? 20 : 24 },
             scrollBeyondLastLine: false,
             smoothScrolling: true,
             wordWrap: 'on',
+            scrollbar: {
+              vertical: 'visible',
+              horizontal: 'hidden',
+              verticalScrollbarSize: 8,
+            },
+            quickSuggestions: { other: !isMobile, comments: false, strings: false },
+            parameterHints: { enabled: !isMobile },
           }}
         />
       </div>

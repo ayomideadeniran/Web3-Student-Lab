@@ -92,6 +92,7 @@ export default function PlaygroundPage() {
   const [syncState, setSyncState] = useState<'idle' | 'syncing' | 'offline' | 'error'>('idle');
   const [isOnline, setIsOnline] = useState(true);
   const [pendingCount, setPendingCount] = useState(0);
+  const [activeTab, setActiveTab] = useState<'editor' | 'output'>('editor');
 
   useEffect(() => {
     const timer = setTimeout(() => setIsInitializing(false), 1500);
@@ -207,19 +208,47 @@ export default function PlaygroundPage() {
           </div>
         </div>
 
+        {/* Mobile Tab Switcher */}
+        <div className="flex lg:hidden mb-6 border border-white/10 rounded-xl p-1 bg-zinc-950">
+          <button
+            onClick={() => setActiveTab('editor')}
+            className={`flex-1 py-3 text-xs font-bold tracking-widest uppercase rounded-lg transition-all min-h-[44px] flex items-center justify-center ${
+              activeTab === 'editor'
+                ? 'bg-red-600 text-white'
+                : 'text-zinc-500 hover:text-zinc-300'
+            }`}
+          >
+            Editor
+          </button>
+          <button
+            onClick={() => setActiveTab('output')}
+            className={`flex-1 py-3 text-xs font-bold tracking-widest uppercase rounded-lg transition-all min-h-[44px] flex items-center justify-center ${
+              activeTab === 'output'
+                ? 'bg-red-600 text-white'
+                : 'text-zinc-500 hover:text-zinc-300'
+            }`}
+          >
+            Output & Terminal
+          </button>
+        </div>
+
         <div className="grid flex-grow grid-cols-1 gap-12 lg:grid-cols-2">
           {/* Editor Placeholder */}
-          <div className="relative flex min-h-[600px] flex-col rounded-3xl border border-white/10 bg-zinc-950 p-8 shadow-2xl">
-            <div className="mb-6 flex items-center justify-between gap-2 border-b border-white/5 pb-4">
-              <div className="flex items-center gap-2">
-                <div className="h-3 w-3 rounded-full bg-red-500"></div>
-                <div className="h-3 w-3 rounded-full bg-zinc-700"></div>
-                <div className="h-3 w-3 rounded-full bg-zinc-700"></div>
-                <span className="ml-4 text-[10px] font-bold tracking-widest text-gray-500 uppercase">
+          <div className={`relative flex min-h-[600px] flex-col rounded-3xl border border-white/10 bg-zinc-950 p-4 sm:p-8 shadow-2xl lg:flex ${
+            activeTab === 'editor' ? 'flex' : 'hidden lg:flex'
+          }`}>
+            <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-white/5 pb-4">
+              <div className="flex items-center gap-2 overflow-hidden">
+                <div className="flex gap-1.5 flex-shrink-0">
+                  <div className="h-3 w-3 rounded-full bg-red-500"></div>
+                  <div className="h-3 w-3 rounded-full bg-zinc-700"></div>
+                  <div className="h-3 w-3 rounded-full bg-zinc-700"></div>
+                </div>
+                <span className="ml-2 text-[10px] font-bold tracking-widest text-gray-500 uppercase truncate">
                   {activeFilePath}
                 </span>
               </div>
-              <div className="flex items-center gap-2 rounded-full border border-red-600/20 bg-red-600/10 px-3 py-1">
+              <div className="flex self-start sm:self-auto items-center gap-2 rounded-full border border-red-600/20 bg-red-600/10 px-3 py-1">
                 <span className="text-[9px] font-black tracking-widest text-red-500 uppercase">
                   Collaborative Mode
                 </span>
@@ -258,7 +287,7 @@ export default function PlaygroundPage() {
             <button
               onClick={handleCompile}
               disabled={isCompiling}
-              className={`mt-4 rounded-xl py-4 text-xs font-black tracking-[0.2em] uppercase transition-all ${
+              className={`mt-4 rounded-xl py-4 text-xs font-black tracking-[0.2em] uppercase transition-all min-h-[44px] flex items-center justify-center ${
                 isCompiling
                   ? 'cursor-not-allowed bg-zinc-800 text-gray-500'
                   : 'bg-red-600 text-white hover:bg-red-500 active:scale-[0.98]'
@@ -269,8 +298,10 @@ export default function PlaygroundPage() {
           </div>
 
           {/* Terminal Output */}
-          <div className="flex flex-col gap-6">
-            <div className="group relative flex-grow overflow-hidden rounded-3xl border border-white/10 bg-black p-8 shadow-inner">
+          <div className={`flex flex-col gap-6 lg:flex ${
+            activeTab === 'output' ? 'flex' : 'hidden lg:flex'
+          }`}>
+            <div className="group relative flex-grow overflow-hidden rounded-3xl border border-white/10 bg-black p-4 sm:p-8 shadow-inner">
               <div className="absolute top-0 left-0 h-1 w-full bg-red-600/30"></div>
               <h3 className="mb-6 text-[10px] font-black tracking-widest text-gray-600 uppercase">
                 Execution_Output
@@ -294,7 +325,7 @@ export default function PlaygroundPage() {
 
             <TerminalPanel />
 
-            <div className="rounded-3xl border border-white/5 bg-zinc-950 p-8">
+            <div className="rounded-3xl border border-white/5 bg-zinc-950 p-4 sm:p-8">
               <h4 className="mb-4 text-[10px] font-black tracking-widest text-white uppercase">
                 Laboratory Notes
               </h4>
@@ -306,7 +337,6 @@ export default function PlaygroundPage() {
               </p>
             </div>
           </div>
-        </div>
       </div>
     </div>
   );

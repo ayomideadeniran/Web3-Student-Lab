@@ -77,7 +77,7 @@ export default function SimulatorPage() {
   }, [ledgers, isLive]);
 
   return (
-    <div className="relative min-h-[calc(100vh-80px)] overflow-hidden bg-black p-6 font-mono text-white md:p-12">
+    <div className="relative min-h-[calc(100vh-80px)] overflow-y-auto lg:overflow-hidden bg-black p-6 font-mono text-white md:p-12">
       {/* Background Grid Accent */}
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:40px_40px]"></div>
 
@@ -109,7 +109,7 @@ export default function SimulatorPage() {
             </div>
             <button
               onClick={() => setIsLive(!isLive)}
-              className="bg-white px-4 py-2 text-[10px] font-black tracking-widest text-black uppercase transition-colors hover:bg-gray-200"
+              className="bg-white px-4 py-2.5 md:py-2 text-[10px] font-black tracking-widest text-black uppercase transition-colors hover:bg-gray-200 min-h-[44px] md:min-h-0 flex items-center justify-center"
               aria-pressed={isLive}
               aria-label={isLive ? 'Stop live sync' : 'Start live sync'}
             >
@@ -118,9 +118,9 @@ export default function SimulatorPage() {
           </div>
         </div>
 
-        <div className="grid h-[calc(100vh-250px)] flex-grow grid-cols-1 gap-8 lg:grid-cols-4">
+        <div className="grid h-auto lg:h-[calc(100vh-250px)] flex-grow grid-cols-1 gap-8 lg:grid-cols-4">
           {/* Recent Ledgers */}
-          <div className="flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-zinc-950 p-6 shadow-2xl lg:col-span-1">
+          <div className="flex flex-col h-[350px] lg:h-full overflow-hidden rounded-2xl border border-white/10 bg-zinc-950 p-6 shadow-2xl lg:col-span-1">
             <h2 className="mb-6 flex items-center justify-between border-b border-white/10 pb-4 text-sm font-bold tracking-widest uppercase">
               Ledger Chain
               <span className="text-[10px] font-normal text-gray-600">History [10]</span>
@@ -130,6 +130,7 @@ export default function SimulatorPage() {
               role="feed"
               aria-label="Recent ledgers"
               aria-live="polite"
+              aria-auto-scrollbar="true"
             >
               {ledgers.length === 0 && (
                 <p className="text-xs text-gray-700 italic">Awaiting first ledger pulse...</p>
@@ -156,14 +157,14 @@ export default function SimulatorPage() {
           </div>
 
           {/* Network Graph Visualizer */}
-          <div className="relative flex h-full flex-col lg:col-span-2">
+          <div className="relative flex h-[350px] md:h-[450px] lg:h-full flex-col lg:col-span-2">
             <WithSkeleton isLoading={isInitializing} skeleton={<GraphSkeleton />}>
               <NetworkGraph transactions={transactions} />
             </WithSkeleton>
           </div>
 
           {/* Live Transaction Stream */}
-          <div className="flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-zinc-950 p-6 shadow-2xl lg:col-span-1">
+          <div className="flex flex-col h-[350px] lg:h-full overflow-hidden rounded-2xl border border-white/10 bg-zinc-950 p-6 shadow-2xl lg:col-span-1">
             <h2 className="mb-6 flex items-center justify-between border-b border-white/10 pb-4 text-sm font-bold tracking-widest uppercase">
               TX Stream
               <span className="text-[10px] font-normal text-gray-600">Memory [50]</span>

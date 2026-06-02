@@ -64,7 +64,8 @@ export default function RoadmapPage() {
           </p>
         </div>
 
-        <div className="relative flex aspect-[4/5] w-full max-w-4xl items-center justify-center overflow-hidden rounded-[3rem] border border-white/5 bg-zinc-950/20 p-12 shadow-inner md:aspect-video">
+        {/* Desktop Interactive SVG Map */}
+        <div className="hidden md:relative md:flex md:aspect-video w-full max-w-4xl items-center justify-center overflow-hidden rounded-[3rem] border border-white/5 bg-zinc-950/20 p-12 shadow-inner">
           {/* Connecting Lines (SVG) */}
           <svg className="pointer-events-none absolute inset-0 h-full w-full opacity-20">
             <line
@@ -172,7 +173,7 @@ export default function RoadmapPage() {
               {activeNode.desc}
             </p>
             <button
-              className={`w-full py-3 text-[10px] font-black tracking-widest uppercase transition-all ${
+              className={`w-full py-3 text-[10px] font-black tracking-widest uppercase transition-all min-h-[44px] flex items-center justify-center ${
                 activeNode.status === 'LOCKED'
                   ? 'cursor-not-allowed bg-zinc-800 text-gray-600'
                   : 'bg-red-600 text-white hover:bg-red-500 active:scale-95'
@@ -185,6 +186,94 @@ export default function RoadmapPage() {
                   : 'Node Locked'}
             </button>
           </div>
+        </div>
+
+        {/* Mobile Vertical Timeline */}
+        <div className="flex md:hidden flex-col gap-6 w-full max-w-md relative px-4">
+          {/* Vertical Connecting Line */}
+          <div className="absolute left-[39px] top-6 bottom-6 w-0.5 border-l-2 border-dashed border-zinc-800"></div>
+
+          {NODES.map((node) => {
+            const isCompleted = node.status === 'COMPLETED';
+            const isInProgress = node.status === 'IN_PROGRESS';
+            const isLocked = node.status === 'LOCKED';
+
+            return (
+              <div
+                key={node.id}
+                onClick={() => setActiveNode(node)}
+                className={`relative flex gap-4 p-4 rounded-2xl border transition-all duration-300 ${
+                  activeNode.id === node.id
+                    ? 'border-red-500/50 bg-zinc-950/80 shadow-lg'
+                    : 'border-white/5 bg-zinc-950/30'
+                }`}
+              >
+                {/* Status Dot in Column */}
+                <div className="relative z-10 flex flex-col items-center justify-start pt-1">
+                  <div
+                    className={`flex h-11 w-11 items-center justify-center rounded-full border-2 ${
+                      isCompleted
+                        ? 'border-green-500 bg-green-500/10'
+                        : isInProgress
+                          ? 'animate-pulse border-red-500 bg-red-500/10'
+                          : 'border-zinc-800 bg-zinc-900'
+                    }`}
+                  >
+                    <div
+                      className={`h-2.5 w-2.5 rounded-full ${
+                        isCompleted
+                          ? 'bg-green-500 shadow-[0_0_10px_#22c55e]'
+                          : isInProgress
+                            ? 'bg-red-500 shadow-[0_0_10px_#ef4444]'
+                            : 'bg-zinc-700'
+                      }`}
+                    ></div>
+                  </div>
+                </div>
+
+                {/* Node Details */}
+                <div className="flex-1 flex flex-col min-w-0 pt-1">
+                  <div className="mb-1.5 flex items-center justify-between gap-2">
+                    <span className={`rounded border px-1.5 py-0.5 text-[8px] font-black tracking-widest uppercase ${
+                      isCompleted
+                        ? 'border-green-500/30 bg-green-500/10 text-green-500'
+                        : isInProgress
+                          ? 'border-red-500/30 bg-red-500/10 text-red-500'
+                          : 'border-white/5 bg-zinc-800 text-gray-500'
+                    }`}>
+                      {node.status.replace('_', ' ')}
+                    </span>
+                    <span className="text-[9px] font-bold text-zinc-600">NODE_0{node.id}</span>
+                  </div>
+                  <h3 className="text-base font-black tracking-tight text-white uppercase truncate">
+                    {node.title}
+                  </h3>
+                  <p className="mt-1 text-xs leading-normal font-light text-zinc-400">
+                    {node.desc}
+                  </p>
+                  
+                  {activeNode.id === node.id && (
+                    <div className="mt-4 animate-in fade-in slide-in-from-top-2 duration-200">
+                      <button
+                        className={`w-full py-3.5 text-[9px] font-black tracking-widest uppercase transition-all rounded-lg min-h-[44px] flex items-center justify-center ${
+                          isLocked
+                            ? 'cursor-not-allowed bg-zinc-900 text-gray-600 border border-white/5'
+                            : 'bg-red-600 text-white hover:bg-red-500 active:scale-95'
+                        }`}
+                        disabled={isLocked}
+                      >
+                        {isCompleted
+                          ? 'Review Protocol'
+                          : isInProgress
+                            ? 'Initiate Node'
+                            : 'Node Locked'}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
         </div>
 
         <div className="mt-12 max-w-2xl px-8 text-center">
