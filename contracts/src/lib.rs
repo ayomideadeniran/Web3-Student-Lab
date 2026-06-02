@@ -22,6 +22,8 @@ pub mod enrollment;
 pub mod events;
 pub mod execution_engine;
 pub mod gaming_asset_exchange;
+#[cfg(test)]
+pub mod gaming_asset_exchange_test;
 pub mod membership_nft;
 pub mod oracle_aggregator;
 pub mod paymaster;
