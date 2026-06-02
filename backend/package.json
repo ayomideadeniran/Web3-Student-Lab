@@ -10,8 +10,6 @@
     "dev": "tsx watch src/index.ts",
     "test": "jest --runInBand",
     "test:coverage": "jest --coverage --runInBand",
-    "collaboration": "tsx src/collaborationServer.ts",
-    "test": "DATABASE_URL='postgres://dummy:dummy@localhost:5432/dummy' node --experimental-vm-modules node_modules/jest/bin/jest.js"
     "collaboration": "tsx src/collaborationServer.ts"
   },
   "keywords": [],

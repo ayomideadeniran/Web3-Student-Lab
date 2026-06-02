@@ -1,4 +1,5 @@
 import { defineConfig } from 'vitest/config';
+import path from 'path';
 
 export default defineConfig({
   test: {
@@ -17,6 +18,11 @@ export default defineConfig({
         'src/lib/p2p-crypto.ts',
         'src/lib/web3-transaction-simulator.ts',
       ],
+    },
+  },
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, 'src'),
     },
   },
 });

@@ -14,6 +14,9 @@ const TYPE_OPTIONS: { value: 'all' | NotificationType; label: string }[] = [
   { value: 'signature', label: 'Signatures' },
   { value: 'enrollment', label: 'Enrollments' },
   { value: 'certificate', label: 'Certificates' },
+  { value: 'course_update', label: 'Courses' },
+  { value: 'announcement', label: 'Announcements' },
+  { value: 'learning_opportunity', label: 'Opportunities' },
   { value: 'system', label: 'System' },
   { value: 'error', label: 'Errors' },
 ];
@@ -24,6 +27,9 @@ const TYPE_COLORS: Record<NotificationType, string> = {
   certificate: 'text-yellow-400 bg-yellow-400/10 border-yellow-400/20',
   system: 'text-gray-400 bg-gray-400/10 border-gray-400/20',
   error: 'text-red-400 bg-red-400/10 border-red-400/20',
+  course_update: 'text-violet-400 bg-violet-400/10 border-violet-400/20',
+  announcement: 'text-cyan-400 bg-cyan-400/10 border-cyan-400/20',
+  learning_opportunity: 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20',
 };
 
 const ITEM_HEIGHT = 72;

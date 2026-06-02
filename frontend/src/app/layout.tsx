@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 
 import Navbar from '@/components/layout/Navbar';
 import ResiliencyBanner from '@/components/layout/ResiliencyBanner';
-import { ToastContainer } from '@/components/notifications/ToastContainer';
+import { CourseNotificationListener, ToastContainer } from '@/components/notifications';
 import { NotificationProvider } from '@/contexts/NotificationContext';
 import { I18nProvider } from '@/i18n';
 import { Web3OnboardingProvider } from '@/contexts/Web3OnboardingContext';
@@ -58,6 +58,7 @@ export default function RootLayout({
                     <main id="main-content" className="flex-grow">
                       {children}
                     </main>
+                    <CourseNotificationListener />
                     <ToastContainer />
                   </Web3OnboardingProvider>
                 </NotificationProvider>
