@@ -5,13 +5,13 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+      'monaco-editor': path.resolve(__dirname, './src/test/__mocks__/monaco-editor.ts'),
     },
   },
   test: {
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
-    pool: 'vmForks',
-    exclude: ['**/node_modules/**', '**/dist/**', '**/e2e/**'],
+    exclude: ['e2e/**', 'node_modules/**'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
@@ -24,11 +24,10 @@ export default defineConfig({
       include: [
         'src/lib/p2p-crypto.ts',
         'src/lib/web3-transaction-simulator.ts',
-        'src/components/ui/SkeletonThemeWrapper.tsx',
-        'src/components/ui/skeletons/PageSkeletons.tsx',
-        'src/components/ui/WithSkeleton.tsx',
-        'src/components/ui/ErrorFallback.tsx',
-        'src/components/ui/ErrorBoundary.tsx',
+        'src/lib/editor/SorobanLanguage.ts',
+        'src/lib/editor/SorobanCompletion.ts',
+        'src/lib/editor/SorobanLinter.ts',
+        'src/components/playground/CodeEditor.tsx',
       ],
     },
   },

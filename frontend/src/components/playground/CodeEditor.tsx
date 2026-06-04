@@ -3,9 +3,15 @@
 import dynamic from 'next/dynamic';
 import type { OnMount } from '@monaco-editor/react';
 import type { editor } from 'monaco-editor';
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronRight, FileText } from 'lucide-react';
 import type { CollaborationProvider } from '@/lib/collaboration/YjsProvider';
+import { extendRustLanguage } from '@/lib/editor/SorobanLanguage';
+import { registerSorobanCompletion } from '@/lib/editor/SorobanCompletion';
+import { registerSorobanHover } from '@/lib/editor/SorobanHover';
+import { createSorobanLinter } from '@/lib/editor/SorobanLinter';
+import type { SorobanLinterInstance } from '@/lib/editor/SorobanLinter';
+import { THEME_COLORS } from '@/lib/theme/themeColors';
 
 const Editor = dynamic(() => import('@monaco-editor/react'), {
   ssr: false,
@@ -39,6 +45,64 @@ impl HelloContract {
     }
 }`;
 
+class EditorErrorBoundary extends React.Component<
+  { children: React.ReactNode; onError: () => void },
+  { hasError: boolean }
+> {
+  constructor(props: { children: React.ReactNode; onError: () => void }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch() {
+    this.props.onError();
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return null;
+    }
+    return this.props.children;
+  }
+}
+
+function FallbackTextarea({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <div className="flex h-full w-full flex-col bg-zinc-950">
+      <div className="flex items-center gap-2 border-b border-red-500/20 bg-red-500/10 px-4 py-2">
+        <span className="text-xs font-bold tracking-wider text-red-400 uppercase">
+          Editor Unavailable
+        </span>
+        <span className="text-xs text-zinc-500">
+          Monaco editor failed to load. Using plain text fallback.
+        </span>
+      </div>
+      <textarea
+        aria-label="Soroban contract code editor (fallback)"
+        className="h-full w resize-none border-0 bg-zinc-950 p-4 font-mono text-sm text-zinc-300 outline-none"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        spellCheck={false}
+      />
+    </div>
+  );
+}
+
+function getPrefersReducedMotion(): boolean {
+  if (typeof window === 'undefined') return false;
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
 export const CodeEditor: React.FC<CodeEditorProps> = ({
   roomName,
   mobileMode = false,
@@ -46,21 +110,9 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
 }) => {
   const [editorInstance, setEditorInstance] = useState<editor.IStandaloneCodeEditor | null>(null);
   const [code, setCode] = useState(DEFAULT_CODE);
-  const [isMobile, setIsMobile] = React.useState(mobileMode);
-
-  React.useEffect(() => {
-    if (typeof window === 'undefined') return;
-    if (mobileMode) {
-      setIsMobile(true);
-      return;
-    }
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, [mobileMode]);
+  const [monacoError, setMonacoError] = useState(false);
+  const linterRef = useRef<SorobanLinterInstance | null>(null);
+  const prefersReducedMotion = useMemo(() => getPrefersReducedMotion(), []);
 
   const collaboratorLabel = useMemo(() => {
     if (collaborationProvider) {
@@ -69,32 +121,112 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
     return roomName ? 'Local Session' : 'Standalone';
   }, [collaborationProvider, roomName]);
 
-  const handleEditorDidMount: OnMount = (mountedEditor, monaco) => {
-    setEditorInstance(mountedEditor);
-    monaco.editor.defineTheme('web3-lab-premium', {
-      base: 'vs-dark',
-      inherit: true,
-      rules: [
-        { token: 'comment', foreground: '636e7b', fontStyle: 'italic' },
-        { token: 'keyword', foreground: 'ff7b72', fontStyle: 'bold' },
-        { token: 'string', foreground: 'a5d6ff' },
-        { token: 'type', foreground: '79c0ff' },
-        { token: 'function', foreground: 'd2a8ff' },
-      ],
-      colors: {
-        'editor.background': '#09090b',
-        'editor.lineHighlightBackground': '#ffffff05',
-        'editorCursor.foreground': '#ef4444',
-        'editor.selectionBackground': '#ef444422',
-        'editorLineNumber.foreground': '#4b5563',
-        'editorLineNumber.activeForeground': '#f3f4f6',
-      },
-    });
-    monaco.editor.setTheme('web3-lab-premium');
-  };
+  const handleCodeChange = useCallback((value: string | undefined) => {
+    setCode(value ?? '');
+  }, []);
+
+  const handleMonacoError = useCallback(() => {
+    setMonacoError(true);
+  }, []);
+
+  const handleEditorDidMount: OnMount = useCallback(
+    (mountedEditor, monaco) => {
+      setEditorInstance(mountedEditor);
+
+      extendRustLanguage(monaco);
+      registerSorobanCompletion(monaco);
+      registerSorobanHover(monaco);
+
+      const colors = THEME_COLORS.dark;
+      monaco.editor.defineTheme('web3-lab-premium', {
+        base: 'vs-dark',
+        inherit: true,
+        rules: [
+          { token: 'comment', foreground: '636e7b', fontStyle: 'italic' },
+          { token: 'keyword', foreground: 'ff7b72', fontStyle: 'bold' },
+          { token: 'string', foreground: 'a5d6ff' },
+          { token: 'type', foreground: '79c0ff' },
+          { token: 'function', foreground: 'd2a8ff' },
+          {
+            token: 'sorobanMacro',
+            foreground: colors.interactive.primary.replace('#', ''),
+            fontStyle: 'bold',
+          },
+          {
+            token: 'sorobanType',
+            foreground: colors.status.info.replace('#', ''),
+            fontStyle: 'bold',
+          },
+          {
+            token: 'sorobanModule',
+            foreground: colors.status.warning.replace('#', ''),
+          },
+          {
+            token: 'moduleSeparator',
+            foreground: colors.text.muted.replace('#', ''),
+          },
+        ],
+        colors: {
+          'editor.background': colors.background.primary,
+          'editor.lineHighlightBackground': '#ffffff05',
+          'editorCursor.foreground': colors.status.error,
+          'editor.selectionBackground': `${colors.status.error}22`,
+          'editorLineNumber.foreground': colors.text.muted,
+          'editorLineNumber.activeForeground': colors.text.secondary,
+        },
+      });
+      monaco.editor.setTheme('web3-lab-premium');
+
+      const model = mountedEditor.getModel();
+      if (model) {
+        if (linterRef.current) {
+          linterRef.current.dispose();
+        }
+        linterRef.current = createSorobanLinter({
+          model,
+          monacoApi: monaco,
+          debounceMs: 300,
+        });
+      }
+    },
+    []
+  );
+
+  useEffect(() => {
+    return () => {
+      if (linterRef.current) {
+        linterRef.current.dispose();
+        linterRef.current = null;
+      }
+    };
+  }, []);
+
+  if (monacoError) {
+    return (
+      <div
+        className="group relative flex h-full flex-grow flex-col overflow-hidden bg-[#09090b]"
+        aria-label="Soroban contract code editor"
+        role="region"
+      >
+        <div className="flex items-center gap-2 border-b border-white/5 bg-black/40 px-6 py-2 text-[10px] font-bold tracking-widest text-gray-500 uppercase">
+          <FileText className="h-3.5 w-3.5 text-gray-400" />
+          <span>Web3-Student-Lab</span>
+          <ChevronRight className="h-3 w-3" />
+          <span className="text-gray-300">contracts</span>
+          <ChevronRight className="h-3 w-3" />
+          <span className="text-red-500">lib.rs</span>
+        </div>
+        <FallbackTextarea value={code} onChange={handleCodeChange} />
+      </div>
+    );
+  }
 
   return (
-    <div className="group relative flex h-full flex-grow flex-col overflow-hidden bg-[#09090b]">
+    <div
+      className="group relative flex h-full flex-grow flex-col overflow-hidden bg-[#09090b]"
+      aria-label="Soroban contract code editor"
+      role="region"
+    >
       <div className="no-scrollbar flex items-center gap-2 overflow-x-auto border-b border-white/5 bg-black/40 px-6 py-2 text-[10px] font-bold tracking-widest text-gray-500 uppercase">
         <FileText className="h-3.5 w-3.5 text-gray-400" />
         <span>Web3-Student-Lab</span>
@@ -115,32 +247,27 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
       </div>
 
       <div className="relative flex-grow">
-        <Editor
-          height="100%"
-          defaultLanguage="rust"
-          language="rust"
-          value={code}
-          onChange={(value) => setCode(value ?? '')}
-          onMount={handleEditorDidMount}
-          options={{
-            minimap: { enabled: false },
-            fontSize: isMobile ? 12 : 14,
-            fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
-            fontLigatures: true,
-            automaticLayout: true,
-            padding: { top: isMobile ? 20 : 24 },
-            scrollBeyondLastLine: false,
-            smoothScrolling: true,
-            wordWrap: 'on',
-            scrollbar: {
-              vertical: 'visible',
-              horizontal: 'hidden',
-              verticalScrollbarSize: 8,
-            },
-            quickSuggestions: { other: !isMobile, comments: false, strings: false },
-            parameterHints: { enabled: !isMobile },
-          }}
-        />
+        <EditorErrorBoundary onError={handleMonacoError}>
+          <Editor
+            height="100%"
+            defaultLanguage="rust"
+            language="rust"
+            value={code}
+            onChange={handleCodeChange}
+            onMount={handleEditorDidMount}
+            options={{
+              minimap: { enabled: false },
+              fontSize: mobileMode ? 12 : 14,
+              fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+              fontLigatures: true,
+              automaticLayout: true,
+              padding: { top: mobileMode ? 20 : 24 },
+              scrollBeyondLastLine: false,
+              smoothScrolling: !prefersReducedMotion,
+              wordWrap: 'on',
+            }}
+          />
+        </EditorErrorBoundary>
       </div>
     </div>
   );
