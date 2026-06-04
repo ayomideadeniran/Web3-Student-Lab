@@ -3,6 +3,7 @@
 import { certificatesAPI } from '@/lib/api';
 import { AlertCircle, BadgeCheck, Search } from 'lucide-react';
 import { useState } from 'react';
+import { ErrorBoundary } from '@/components/ui';
 
 type VerificationResponse = {
   isValid: boolean;
@@ -40,7 +41,8 @@ export default function VerifyPage() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl px-4 pb-20 pt-12 sm:px-6 lg:px-8">
+    <ErrorBoundary>
+    <div className="mx-auto max-w-5xl px-4 pb-20 pt-12 sm:px-6 lg:px-8" aria-busy={loading}>
       <section className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr]">
         <div className="space-y-6">
           <span className="eyebrow">Public credential verification</span>
@@ -153,6 +155,7 @@ export default function VerifyPage() {
         </section>
       )}
     </div>
+    </ErrorBoundary>
   );
 }
 

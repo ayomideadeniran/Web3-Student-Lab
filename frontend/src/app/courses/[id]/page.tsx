@@ -6,7 +6,8 @@ import { certificatesAPI, Course, coursesAPI, enrollmentsAPI } from '@/lib/api';
 import { getCourseContent } from '@/lib/course-content';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
+import { ErrorBoundary, ErrorFallback, CourseDetailSkeleton } from '@/components/ui';
 
 export default function CourseDetailPage() {
   const params = useParams();
@@ -15,36 +16,36 @@ export default function CourseDetailPage() {
   const { publicKey } = useWallet();
   const [course, setCourse] = useState<Course | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [isEnrolled, setIsEnrolled] = useState(false);
   const [isMinting, setIsMinting] = useState(false);
   const [mintSuccess, setMintSuccess] = useState(false);
 
-  useEffect(() => {
+  const loadCourse = useCallback(async () => {
     if (!params?.id) return;
+    setIsLoading(true);
+    setError(null);
+    try {
+      const id = typeof params?.id === 'string' ? params.id : params?.id?.[0];
+      if (!id) return;
+      const data = await coursesAPI.getById(id);
+      setCourse(data);
 
-    async function loadCourse() {
-      try {
-        const id = typeof params?.id === 'string' ? params.id : params?.id?.[0];
-        if (!id) return;
-        const data = await coursesAPI.getById(id);
-        setCourse(data);
-
-        // Check if user is enrolled
-        if (user) {
-          const enrollments = await enrollmentsAPI.getByStudentId(user.id);
-          const enrolled = enrollments.some((enrollment) => enrollment.courseId === data.id);
-          setIsEnrolled(enrolled);
-        }
-      } catch (error) {
-        console.error('Failed to load course:', error);
-        router.push('/courses');
-      } finally {
-        setIsLoading(false);
+      if (user) {
+        const enrollments = await enrollmentsAPI.getByStudentId(user.id);
+        const enrolled = enrollments.some((enrollment) => enrollment.courseId === data.id);
+        setIsEnrolled(enrolled);
       }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load course');
+    } finally {
+      setIsLoading(false);
     }
+  }, [params, user]);
 
+  useEffect(() => {
     loadCourse();
-  }, [params, user, router]);
+  }, [loadCourse]);
 
   const handleEnroll = () => {
     if (!course) return;
@@ -81,13 +82,14 @@ export default function CourseDetailPage() {
   };
 
   if (isLoading) {
+    return <CourseDetailSkeleton />;
+  }
+
+  if (error) {
     return (
-      <div className="flex min-h-[calc(100vh-80px)] items-center justify-center bg-black">
-        <div className="text-center">
-          <div className="mx-auto mb-4 h-16 w-16 animate-spin rounded-full border-4 border-red-600/30 border-t-red-600"></div>
-          <p className="font-mono text-sm tracking-widest text-red-500 uppercase">
-            Loading Header Data...
-          </p>
+      <div className="flex min-h-[calc(100vh-80px)] items-center justify-center bg-black p-8">
+        <div className="w-full max-w-md">
+          <ErrorFallback message={error} onRetry={loadCourse} variant="card" />
         </div>
       </div>
     );
@@ -115,7 +117,8 @@ export default function CourseDetailPage() {
   const courseContent = getCourseContent(course);
 
   return (
-    <div className="relative min-h-[calc(100vh-80px)] overflow-hidden bg-black pb-20 text-white">
+    <ErrorBoundary>
+    <div className="relative min-h-[calc(100vh-80px)] overflow-hidden bg-black pb-20 text-white" aria-busy={isLoading}>
       {/* Background Glow */}
       <div className="pointer-events-none absolute top-0 right-0 h-[600px] w-[600px] rounded-full bg-red-600/10 blur-[120px]"></div>
 
@@ -413,5 +416,6 @@ export default function CourseDetailPage() {
         </div>
       </main>
     </div>
+    </ErrorBoundary>
   );
 }

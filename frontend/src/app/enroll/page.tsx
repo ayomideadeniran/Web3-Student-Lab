@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useNotifications } from '@/contexts/NotificationContext';
 import { useWallet } from '@/contexts/WalletContext';
 import { enrollmentsAPI } from '@/lib/api';
+import { EnrollPageSkeleton, ErrorBoundary, ErrorFallback } from '@/components/ui';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
@@ -21,6 +22,7 @@ function EnrollmentContent() {
   const [courseCredits, setCourseCredits] = useState<number | undefined>();
   const [completedCourses, setCompletedCourses] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!searchParams) return;
@@ -41,8 +43,8 @@ function EnrollmentContent() {
             .filter((e) => e.status === 'completed')
             .map((e) => e.courseId);
           setCompletedCourses(completed);
-        } catch (error) {
-          console.error('Failed to load user enrollments:', error);
+        } catch (err) {
+          setLoadError(err instanceof Error ? err.message : 'Failed to load enrollments');
           push({
             type: 'error',
             title: 'Could not load enrollments',
@@ -65,13 +67,14 @@ function EnrollmentContent() {
   };
 
   if (isLoading) {
+    return <EnrollPageSkeleton />;
+  }
+
+  if (loadError) {
     return (
-      <div className="flex min-h-[calc(100vh-80px)] items-center justify-center bg-black">
-        <div className="text-center">
-          <div className="mx-auto mb-4 h-16 w-16 animate-spin rounded-full border-4 border-red-600/30 border-t-red-600" />
-          <p className="font-mono text-sm tracking-widest text-red-500 uppercase">
-            Initializing...
-          </p>
+      <div className="flex min-h-[calc(100vh-80px)] items-center justify-center bg-black p-8">
+        <div className="w-full max-w-md">
+          <ErrorFallback message={loadError} variant="card" />
         </div>
       </div>
     );
@@ -152,7 +155,8 @@ function EnrollmentContent() {
   }
 
   return (
-    <div className="min-h-[calc(100vh-80px)] bg-black px-4 py-12 text-white">
+    <ErrorBoundary>
+    <div className="min-h-[calc(100vh-80px)] bg-black px-4 py-12 text-white" aria-busy={isLoading}>
       <div className="mx-auto max-w-6xl">
         <div className="mb-8">
           <Link
@@ -197,6 +201,7 @@ function EnrollmentContent() {
         />
       </div>
     </div>
+    </ErrorBoundary>
   );
 }
 
@@ -204,12 +209,7 @@ export default function EnrollmentPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-[calc(100vh-80px)] items-center justify-center bg-black">
-          <div className="text-center">
-            <div className="mx-auto mb-4 h-16 w-16 animate-spin rounded-full border-4 border-red-600/30 border-t-red-600" />
-            <p className="font-mono text-sm tracking-widest text-red-500 uppercase">Loading...</p>
-          </div>
-        </div>
+        <EnrollPageSkeleton />
       }
     >
       <EnrollmentContent />

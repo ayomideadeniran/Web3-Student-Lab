@@ -3,32 +3,36 @@
 import { Course, coursesAPI } from '@/lib/api';
 import { ArrowRight, BookOpen, Search } from 'lucide-react';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
+import { ErrorBoundary, ErrorFallback, CourseListSkeleton } from '@/components/ui';
 
 export default function CoursesPage() {
   const [courses, setCourses] = useState<Course[]>([]);
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await coursesAPI.getAll();
+      setCourses(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load courses');
+      setCourses([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     let mounted = true;
-
-    async function load() {
-      try {
-        const data = await coursesAPI.getAll();
-        if (mounted) setCourses(data);
-      } catch {
-        if (mounted) setCourses([]);
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    }
-
     load();
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [load]);
 
   const filteredCourses = courses.filter((course) => {
     const haystack =
@@ -37,7 +41,8 @@ export default function CoursesPage() {
   });
 
   return (
-    <div className="mx-auto max-w-7xl px-4 pb-20 pt-12 sm:px-6 lg:px-8">
+    <ErrorBoundary>
+    <div className="mx-auto max-w-7xl px-4 pb-20 pt-12 sm:px-6 lg:px-8" aria-busy={loading}>
       <section className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr]">
         <div className="space-y-6">
           <span className="eyebrow">Learning modules</span>
@@ -76,19 +81,24 @@ export default function CoursesPage() {
           <p className="mt-3 text-sm text-[var(--muted)]">
             {loading
               ? 'Loading modules...'
-              : `${filteredCourses.length} module${filteredCourses.length === 1 ? '' : 's'} available`}
+              : error
+                ? 'Could not load modules'
+                : `${filteredCourses.length} module${filteredCourses.length === 1 ? '' : 's'} available`}
           </p>
         </div>
       </section>
 
-      <section className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-        {loading &&
-          Array.from({ length: 3 }).map((_, index) => (
-            <div key={index} className="surface-card h-72 animate-pulse p-6" />
-          ))}
+      {loading && <CourseListSkeleton />}
 
-        {!loading &&
-          filteredCourses.map((course) => (
+      {error && !loading && (
+        <div className="mt-10">
+          <ErrorFallback message={error} onRetry={load} variant="card" />
+        </div>
+      )}
+
+      {!loading && !error && (
+        <section className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+          {filteredCourses.map((course) => (
             <Link
               key={course.id}
               href={`/courses/${course.id}`}
@@ -128,15 +138,17 @@ export default function CoursesPage() {
             </Link>
           ))}
 
-        {!loading && filteredCourses.length === 0 && (
-          <div className="surface-card col-span-full p-8 text-center">
-            <h2 className="text-xl font-semibold text-[var(--text-strong)]">No modules found</h2>
-            <p className="mt-2 text-sm text-[var(--muted)]">
-              Try a different search term or clear the filter to see the full learning catalog.
-            </p>
-          </div>
-        )}
-      </section>
+          {filteredCourses.length === 0 && (
+            <div className="surface-card col-span-full p-8 text-center">
+              <h2 className="text-xl font-semibold text-[var(--text-strong)]">No modules found</h2>
+              <p className="mt-2 text-sm text-[var(--muted)]">
+                Try a different search term or clear the filter to see the full learning catalog.
+              </p>
+            </div>
+          )}
+        </section>
+      )}
     </div>
+    </ErrorBoundary>
   );
 }

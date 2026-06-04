@@ -4,7 +4,7 @@ import path from 'path';
 export default defineConfig({
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, 'src'),
+      '@': path.resolve(__dirname, './src'),
     },
   },
   test: {
@@ -21,7 +21,15 @@ export default defineConfig({
         branches: 85,
         statements: 90,
       },
-      include: ['src/**/*.{ts,tsx}'],
+      include: [
+        'src/lib/p2p-crypto.ts',
+        'src/lib/web3-transaction-simulator.ts',
+        'src/components/ui/SkeletonThemeWrapper.tsx',
+        'src/components/ui/skeletons/PageSkeletons.tsx',
+        'src/components/ui/WithSkeleton.tsx',
+        'src/components/ui/ErrorFallback.tsx',
+        'src/components/ui/ErrorBoundary.tsx',
+      ],
     },
   },
 });

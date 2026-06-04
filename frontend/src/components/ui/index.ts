@@ -11,8 +11,22 @@ export { Label } from './Label';
 export { Progress } from './Progress';
 export { ScrollArea } from './ScrollArea';
 export { Skeleton } from './Skeleton';
+export { SkeletonThemeWrapper } from './SkeletonThemeWrapper';
 export { Slider } from './Slider';
 export { Switch } from './Switch';
 export { Tabs } from './Tabs';
 export { ThemeToggle } from './ThemeToggle';
 export { WithSkeleton } from './WithSkeleton';
+export {
+  DashboardSkeleton,
+  CourseListSkeleton,
+  CourseDetailSkeleton,
+  CertificatesVaultSkeleton,
+  CertificateDetailSkeleton,
+  HomePageSkeleton,
+  EnrollPageSkeleton,
+  IdeasPageSkeleton,
+  VerifyPageSkeleton,
+  AnalyticsDashboardSkeleton,
+  AdminContentSkeleton,
+} from './skeletons/PageSkeletons';

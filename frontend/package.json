@@ -39,6 +39,7 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-joyride": "^3.1.0",
+    "react-loading-skeleton": "^3.5.0",
     "react-window": "^2.2.7",
     "reactflow": "^11.11.4",
     "recharts": "^3.8.1",

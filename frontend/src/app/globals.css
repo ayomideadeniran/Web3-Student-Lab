@@ -1,6 +1,12 @@
 @import 'tailwindcss';
 @source '../**/*.{ts,tsx}';
 
+/* react-loading-skeleton overrides */
+.react-loading-skeleton {
+  --base-color: rgba(255, 255, 255, 0.05) !important;
+  --highlight-color: rgba(255, 255, 255, 0.1) !important;
+}
+
 :root {
   --bg: #09111d;
   --bg-panel: rgba(14, 21, 32, 0.78);

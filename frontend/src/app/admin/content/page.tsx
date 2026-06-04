@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { Course, coursesAPI } from '@/lib/api';
+import { ErrorBoundary, ErrorFallback, AdminContentSkeleton } from '@/components/ui';
 import {
   CourseLearningJourney,
   LearningLevel,
@@ -18,29 +19,29 @@ export default function AdminContentPage() {
   const [selectedCourseId, setSelectedCourseId] = useState('');
   const [journey, setJourney] = useState<CourseLearningJourney | null>(null);
   const [status, setStatus] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadCourses = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await coursesAPI.getAll();
+      setCourses(data);
+      if (data[0]) {
+        setSelectedCourseId((current) => current || data[0]!.id);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load courses');
+      setCourses([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    let mounted = true;
-
-    async function loadCourses() {
-      try {
-        const data = await coursesAPI.getAll();
-        if (!mounted) return;
-        setCourses(data);
-        if (data[0]) {
-          setSelectedCourseId((current) => current || data[0]!.id);
-        }
-      } catch {
-        if (!mounted) return;
-        setCourses([]);
-      }
-    }
-
     loadCourses();
-    return () => {
-      mounted = false;
-    };
-  }, []);
+  }, [loadCourses]);
 
   const selectedCourse = useMemo(
     () => courses.find((course) => course.id === selectedCourseId) || null,
@@ -223,8 +224,21 @@ export default function AdminContentPage() {
     setStatus('Saved. Learners will see the updated levels and resources on their dashboard.');
   };
 
+  if (loading) {
+    return <AdminContentSkeleton />;
+  }
+
+  if (error) {
+    return (
+      <div className="mx-auto max-w-7xl px-4 pb-20 pt-12 sm:px-6 lg:px-8">
+        <ErrorFallback message={error} onRetry={loadCourses} variant="card" />
+      </div>
+    );
+  }
+
   return (
-    <div className="mx-auto max-w-7xl px-4 pb-20 pt-12 sm:px-6 lg:px-8">
+    <ErrorBoundary>
+    <div className="mx-auto max-w-7xl px-4 pb-20 pt-12 sm:px-6 lg:px-8" aria-busy={loading}>
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <span className="eyebrow">Admin content studio</span>
@@ -454,6 +468,7 @@ export default function AdminContentPage() {
         )}
       </div>
     </div>
+    </ErrorBoundary>
   );
 }
 

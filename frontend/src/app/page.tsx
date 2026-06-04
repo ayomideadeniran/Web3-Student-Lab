@@ -5,6 +5,7 @@ import { learnerPillars, spotlightTools } from '@/lib/site-data';
 import { ArrowRight, CheckCircle2, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { ErrorBoundary, HomePageSkeleton } from '@/components/ui';
 
 type LandingStats = {
   courses: number;
@@ -20,11 +21,13 @@ const defaultStats: LandingStats = {
 
 export default function HomePage() {
   const [stats, setStats] = useState<LandingStats>(defaultStats);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let mounted = true;
 
     async function load() {
+      setLoading(true);
       try {
         const data = (await analyticsAPI.getGlobalStats()) as any;
         const summary = data?.summary || [];
@@ -40,6 +43,8 @@ export default function HomePage() {
         });
       } catch {
         if (mounted) setStats(defaultStats);
+      } finally {
+        if (mounted) setLoading(false);
       }
     }
 
@@ -49,8 +54,13 @@ export default function HomePage() {
     };
   }, []);
 
+  if (loading) {
+    return <HomePageSkeleton />;
+  }
+
   return (
-    <div className="mx-auto max-w-7xl px-4 pb-20 sm:px-6 lg:px-8">
+    <ErrorBoundary>
+    <div className="mx-auto max-w-7xl px-4 pb-20 sm:px-6 lg:px-8" aria-busy={loading}>
       <section className="grid gap-12 py-14 lg:grid-cols-[1.15fr_0.85fr] lg:py-20">
         <div className="space-y-8">
           <span className="eyebrow">Open-source blockchain education</span>
@@ -169,5 +179,6 @@ export default function HomePage() {
         </div>
       </section>
     </div>
+    </ErrorBoundary>
   );
 }
