@@ -131,7 +131,12 @@ export const startStorageWorkers = (): {
 
   if (!pinWorker) {
     pinWorker = new Worker(STORAGE_PIN_QUEUE_NAME, pinStorageContent, {
-      connection: redisConnection,
+      connection: {
+        host: new URL(process.env.REDIS_URL || 'redis://localhost:6379').hostname,
+        port: Number(new URL(process.env.REDIS_URL || 'redis://localhost:6379').port) || 6379,
+        password: new URL(process.env.REDIS_URL || 'redis://localhost:6379').password || undefined,
+        maxRetriesPerRequest: null,
+      },
       concurrency: Number(process.env.STORAGE_WORKER_CONCURRENCY || '10'),
     });
 
@@ -145,7 +150,12 @@ export const startStorageWorkers = (): {
       STORAGE_GC_QUEUE_NAME,
       async (job) => garbageCollectStorage(job),
       {
-        connection: redisConnection,
+        connection: {
+          host: new URL(process.env.REDIS_URL || 'redis://localhost:6379').hostname,
+          port: Number(new URL(process.env.REDIS_URL || 'redis://localhost:6379').port) || 6379,
+          password: new URL(process.env.REDIS_URL || 'redis://localhost:6379').password || undefined,
+          maxRetriesPerRequest: null,
+        },
         concurrency: 1,
       }
     );

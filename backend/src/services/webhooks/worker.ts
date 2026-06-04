@@ -140,7 +140,12 @@ export const startWebhookWorker = (): Worker<WebhookDeliveryJobData> | null => {
       }
     },
     {
-      connection: redisConnection,
+      connection: {
+        host: new URL(process.env.REDIS_URL || 'redis://localhost:6379').hostname,
+        port: Number(new URL(process.env.REDIS_URL || 'redis://localhost:6379').port) || 6379,
+        password: new URL(process.env.REDIS_URL || 'redis://localhost:6379').password || undefined,
+        maxRetriesPerRequest: null,
+      },
       concurrency: Number(process.env.WEBHOOK_WORKER_CONCURRENCY || '25'),
     }
   );

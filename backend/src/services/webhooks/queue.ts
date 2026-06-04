@@ -39,8 +39,15 @@ const createQueue = (name: string, defaultJobOptions?: JobsOptions) => {
     } as unknown as Queue<WebhookDeliveryJobData>;
   }
 
+  const redisUrl = new URL(process.env.REDIS_URL || 'redis://localhost:6379');
+  
   return new Queue<WebhookDeliveryJobData>(name, {
-    connection: redisConnection,
+    connection: {
+      host: redisUrl.hostname,
+      port: Number(redisUrl.port) || 6379,
+      password: redisUrl.password || undefined,
+      maxRetriesPerRequest: null,
+    },
     defaultJobOptions,
   });
 };

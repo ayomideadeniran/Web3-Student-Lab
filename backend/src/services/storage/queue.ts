@@ -32,8 +32,15 @@ const createQueue = <T>(name: string, defaultJobOptions?: JobsOptions) => {
     } as unknown as Queue<T>;
   }
 
+  const redisUrl = new URL(process.env.REDIS_URL || 'redis://localhost:6379');
+  
   return new Queue<T>(name, {
-    connection: redisConnection,
+    connection: {
+      host: redisUrl.hostname,
+      port: Number(redisUrl.port) || 6379,
+      password: redisUrl.password || undefined,
+      maxRetriesPerRequest: null,
+    },
     defaultJobOptions,
   });
 };
