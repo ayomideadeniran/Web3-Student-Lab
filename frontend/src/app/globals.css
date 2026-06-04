@@ -133,3 +133,60 @@ textarea {
     scroll-behavior: auto !important;
   }
 }
+
+.skip-link {
+  position: fixed;
+  top: -100%;
+  left: 0;
+  z-index: 9999;
+  padding: 0.75rem 1rem;
+  border-bottom-right-radius: 0.75rem;
+  background: white;
+  color: #111827;
+  font-weight: 600;
+  font-size: 0.875rem;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  transition: top 0.1s ease-in-out;
+}
+
+.skip-link:focus {
+  top: 0;
+  outline: 2px solid var(--brand-strong);
+  outline-offset: 2px;
+}
+
+.skip-link-group .skip-link:not(:first-child) {
+  left: 14rem;
+}
+
+.skip-link-group .skip-link:nth-child(3) {
+  left: 28rem;
+}
+
+[data-focus-visible-added]:focus-visible {
+  outline: 2px solid var(--brand-strong);
+  outline-offset: 2px;
+  border-radius: 0.25rem;
+}
+
+[role="tab"]:focus-visible,
+[role="menuitem"]:focus-visible,
+[role="option"]:focus-visible,
+[role="radio"]:focus-visible,
+[role="switch"]:focus-visible {
+  outline: 2px solid var(--brand-strong);
+  outline-offset: 2px;
+}
+
+[aria-current="page"] {
+  font-weight: 600;
+}
+
+@media (forced-colors: active) {
+  .skip-link:focus {
+    outline: 3px solid ButtonText;
+  }
+  :focus-visible {
+    outline: 3px solid ButtonText;
+  }
+}

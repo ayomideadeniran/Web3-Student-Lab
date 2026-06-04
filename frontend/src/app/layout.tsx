@@ -17,7 +17,7 @@ import ResiliencyBanner from '@/components/layout/ResiliencyBanner';
 import { CourseNotificationListener, ToastContainer } from '@/components/notifications';
 import { NotificationProvider } from '@/contexts/NotificationContext';
 import { Web3OnboardingProvider } from '@/contexts/Web3OnboardingContext';
-import { TutorialProvider } from '@/contexts/TutorialContext';
+import { SkipLink } from '@/components/ui/SkipLink';
 
 export default function RootLayout({
   children,
@@ -52,17 +52,18 @@ export default function RootLayout({
               <I18nProvider>
                 <NotificationProvider>
                   <Web3OnboardingProvider>
-                    <TutorialProvider>
-                      <a href="#main-content" className="skip-to-content">
-                        Skip to main content
-                      </a>
-                      <Navbar />
-                      <ResiliencyBanner />
-                      <main id="main-content" className="flex-grow">
-                        {children}
-                      </main>
-                      <ToastContainer />
-                    </TutorialProvider>
+                    <SkipLink
+                      targets={[
+                        { id: 'main-content', label: 'Skip to main content' },
+                        { id: 'primary-navigation', label: 'Skip to navigation' },
+                      ]}
+                    />
+                    <Navbar />
+                    <ResiliencyBanner />
+                    <main id="main-content" className="flex-grow outline-none" tabIndex={-1}>
+                      {children}
+                    </main>
+                    <ToastContainer />
                   </Web3OnboardingProvider>
                 </NotificationProvider>
               </I18nProvider>
