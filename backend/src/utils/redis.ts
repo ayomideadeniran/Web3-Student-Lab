@@ -5,20 +5,36 @@ import { Redis } from 'ioredis';
 
 const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
 
-const createTestRedisClient = (): Redis =>
-  ({
-    del: async () => 0,
-    disconnect: () => undefined,
-    duplicate: () => createTestRedisClient(),
-    get: async () => null,
-    on: () => createTestRedisClient(),
-    publish: async () => 0,
-    quit: async () => 'OK',
-    setex: async () => 'OK',
-    subscribe: async () => 0,
-  } as unknown as Redis);
+const createTestRedisClient = () => {
+  const memoryStore = new Map<string, string>();
 
-const createRedisClient = (): Redis => {
+  return {
+    connect: async () => undefined,
+    disconnect: async () => undefined,
+    quit: async () => undefined,
+    ping: async () => 'PONG',
+    info: async () => 'test-redis',
+    on: () => undefined,
+    off: () => undefined,
+    get: async (key: string) => memoryStore.get(key) ?? null,
+    set: async (key: string, value: string) => {
+      memoryStore.set(key, value);
+      return 'OK';
+    },
+    setex: async (key: string, _ttl: number, value: string) => {
+      memoryStore.set(key, value);
+      return 'OK';
+    },
+    del: async (...keys: string[]) => {
+      keys.forEach((key) => memoryStore.delete(key));
+      return keys.length;
+    },
+    lpush: async (_key: string, ...values: string[]) => values.length,
+    brpop: async () => null,
+  };
+};
+
+const createRedisClient = () => {
   if (process.env.NODE_ENV === 'test') {
     return createTestRedisClient();
   }

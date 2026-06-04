@@ -18,7 +18,6 @@ import { requestLogger } from './middleware/requestLogger.js';
 import { requireWorkspaceMiddleware } from './middleware/WorkspaceContext.js';
 import freelanceRoute from './routes/freelance.js';
 import routes from './routes/index.js';
-import { scheduleStorageGc, startStorageWorkers, stopStorageWorkers } from './services/storage/index.js';
 import { startWebhookWorker, stopWebhookWorker } from './services/webhooks/index.js';
 import { validateEnvironment } from './utils/checkEnv.js';
 import logger from './utils/logger.js';
@@ -57,11 +56,7 @@ if (config.app.env !== 'test') {
     logger.warn('CacheWarmer failed to start:', err);
   });
 
-  startStorageWorkers();
   startWebhookWorker();
-  scheduleStorageGc().catch((err) => {
-    logger.warn('Storage GC schedule failed to start:', err);
-  });
 
   logger.info('Distributed caching layer initialized');
 }
@@ -175,7 +170,6 @@ if (config.app.env !== 'test') {
     // Stop cache components
     blockHeaderListener.stop();
     cacheWarmer.stop();
-    await stopStorageWorkers();
     await stopWebhookWorker();
     await distributedCacheManager.gracefulShutdown();
 
@@ -196,7 +190,6 @@ if (config.app.env !== 'test') {
     // Stop cache components
     blockHeaderListener.stop();
     cacheWarmer.stop();
-    await stopStorageWorkers();
     await stopWebhookWorker();
     await distributedCacheManager.gracefulShutdown();
 
