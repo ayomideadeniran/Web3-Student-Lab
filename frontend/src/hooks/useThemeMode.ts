@@ -3,25 +3,37 @@
 import { THEME_COLORS, getChartColors } from '@/lib/theme/themeColors';
 import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
+import { useThemePreferences } from './useUserPreferences';
 
 export function useThemeMode() {
   const { theme, setTheme, systemTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const { theme: storedTheme, setTheme: setStoredTheme } = useThemePreferences();
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Sync stored theme with next-themes on mount
+  useEffect(() => {
+    if (mounted && storedTheme) {
+      setTheme(storedTheme);
+    }
+  }, [mounted, storedTheme, setTheme]);
 
   const currentTheme = mounted ? (theme === 'system' ? systemTheme : theme) : 'dark';
   const isDark = currentTheme === 'dark';
   const isLight = currentTheme === 'light';
 
   const toggleTheme = () => {
-    setTheme(isDark ? 'light' : 'dark');
+    const newTheme = isDark ? 'light' : 'dark';
+    setTheme(newTheme);
+    setStoredTheme(newTheme);
   };
 
   const setThemeMode = (newTheme: 'light' | 'dark' | 'system') => {
     setTheme(newTheme);
+    setStoredTheme(newTheme);
   };
 
   // Get current theme colors
