@@ -4411,3 +4411,29 @@ Please copy .env.example to .env and fill in the required values.
 2026-05-31 11:04:50 info: 🌍 Environment: development
 2026-05-31 11:04:50 info: 🔌 Port: 8080
 2026-05-31 11:04:50 info: 🌐 Stellar Network: testnet
+2026-06-02 11:49:03 info: RSA Key rotated. New Key ID: 5a0683f4-6eee-4cfb-9923-1b8054e4850c
+2026-06-02 11:49:04 info: Blockchain service initialized in simulation mode
+2026-06-02 11:49:07 info: Notification created [course_created] Web3 101 — New Course
+2026-06-02 11:49:07 info: Notification created [learning_opportunity]  — Recommended Course
+2026-06-02 11:49:07 info: Notification created [announcement]  — Platform Update
+2026-06-02 11:49:07 info: Notification created [course_created]  — Broadcast
+2026-06-02 11:49:07 info: Notification created [course_updated]  — User-specific
+2026-06-02 11:49:07 info: Notification created [course_created]  — Other user
+2026-06-02 11:49:07 info: Notification created [course_created]  — A
+2026-06-02 11:49:07 info: Notification created [course_created]  — B
+2026-06-02 11:49:07 info: Notification created [course_created]  — First
+2026-06-02 11:49:07 info: Notification created [course_created]  — Second
+2026-06-02 11:49:07 info: Notification created [course_created]  — Test
+2026-06-02 11:49:07 info: Notification created [course_created]  — A
+2026-06-02 11:49:07 info: Notification created [course_created]  — B
+2026-06-02 11:49:07 info: Notification created [announcement]  — C
+2026-06-02 11:49:07 info: GET /api/v1/notifications
+2026-06-02 11:49:07 info: Notification created [course_created] Web3 101 — New Course
+2026-06-02 11:49:07 info: GET /api/v1/notifications?userId=test-user
+2026-06-02 11:49:07 info: Notification created [course_created]  — Read test
+2026-06-02 11:49:07 info: PUT /api/v1/notifications/notif-1780397347202-1/read
+2026-06-02 11:49:07 info: PUT /api/v1/notifications/bad-id/read
+2026-06-02 11:49:07 info: Notification created [course_created]  — A
+2026-06-02 11:49:07 info: Notification created [course_created]  — B
+2026-06-02 11:49:07 info: PUT /api/v1/notifications/read-all
+2026-06-02 11:49:07 info: PUT /api/v1/notifications/read-all

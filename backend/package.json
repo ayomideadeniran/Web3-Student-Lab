@@ -8,8 +8,8 @@
     "start": "node dist/src/index.js",
     "start:prod": "node dist/src/index.js",
     "dev": "tsx watch src/index.ts",
-    "test": "cross-env NODE_ENV=test jest --runInBand",
-    "test:coverage": "cross-env NODE_ENV=test jest --coverage --runInBand",
+    "test": "jest --runInBand",
+    "test:coverage": "jest --coverage --runInBand",
     "collaboration": "tsx src/collaborationServer.ts"
   },
   "keywords": [],

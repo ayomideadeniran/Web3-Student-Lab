@@ -9,6 +9,9 @@ const TYPE_COLORS: Record<NotificationType, string> = {
   certificate: 'border-yellow-500/40 bg-yellow-500/10',
   system: 'border-gray-500/40 bg-gray-500/10',
   error: 'border-red-500/40 bg-red-500/10',
+  course_update: 'border-violet-500/40 bg-violet-500/10',
+  announcement: 'border-cyan-500/40 bg-cyan-500/10',
+  learning_opportunity: 'border-emerald-500/40 bg-emerald-500/10',
 };
 
 const AUTO_DISMISS_MS = 4000;

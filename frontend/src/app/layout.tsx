@@ -14,10 +14,7 @@ export const metadata: Metadata = {
 import { KeyboardShortcutsProvider } from '@/components/keyboard/KeyboardShortcutsProvider';
 import Navbar from '@/components/layout/Navbar';
 import ResiliencyBanner from '@/components/layout/ResiliencyBanner';
-import { OfflineNotification } from '@/components/notifications/OfflineNotification';
-import { OfflineReadyNotification } from '@/components/notifications/OfflineReadyNotification';
-import { ToastContainer } from '@/components/notifications/ToastContainer';
-import { OfflineSyncHandler } from '@/components/OfflineSyncHandler';
+import { CourseNotificationListener, ToastContainer } from '@/components/notifications';
 import { NotificationProvider } from '@/contexts/NotificationContext';
 import { Web3OnboardingProvider } from '@/contexts/Web3OnboardingContext';
 import { I18nProvider } from '@/i18n';
@@ -54,19 +51,18 @@ export default function RootLayout({
             <AuthProvider>
               <I18nProvider>
                 <NotificationProvider>
-                  <KeyboardShortcutsProvider>
-                    <Web3OnboardingProvider>
-                      <a href="#main-content" className="skip-to-content">
-                        Skip to main content
-                      </a>
-                      <Navbar />
-                      <ResiliencyBanner />
-                      <main id="main-content" className="flex-grow">
-                        {children}
-                      </main>
-                      <ToastContainer />
-                    </Web3OnboardingProvider>
-                  </KeyboardShortcutsProvider>
+                  <Web3OnboardingProvider>
+                    <a href="#main-content" className="skip-to-content">
+                      Skip to main content
+                    </a>
+                    <Navbar />
+                    <ResiliencyBanner />
+                    <main id="main-content" className="flex-grow">
+                      {children}
+                    </main>
+                    <CourseNotificationListener />
+                    <ToastContainer />
+                  </Web3OnboardingProvider>
                 </NotificationProvider>
               </I18nProvider>
             </AuthProvider>

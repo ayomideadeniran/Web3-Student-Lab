@@ -12,6 +12,7 @@ import exportRouter from './export.routes.js';
 import generatorRouter from './generator/generator.routes.js';
 import healthRouter from './health.routes.js';
 import learningRoutes from './learning/learning.routes.js';
+import notificationRouter from '../notifications/notification.routes.js';
 import securityRouter from './security.routes.js';
 import studentsRouter from './students.js';
 
@@ -28,6 +29,7 @@ router.use('/feedback', feedbackRouter);
 router.use('/auth', authRoutes);
 router.use('/learning', learningRoutes);
 router.use('/contracts', contractRouter);
+router.use('/notifications', notificationRouter);
 router.use('/security', securityRouter);
 router.use('/generator', generatorRouter);
 router.use('/export', exportRouter);
