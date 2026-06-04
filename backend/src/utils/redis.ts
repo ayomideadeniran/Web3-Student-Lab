@@ -39,9 +39,15 @@ const createRedisClient = () => {
     return createTestRedisClient() as unknown as Redis;
   }
 
-  return new Redis(redisUrl, {
+  const client = new Redis(redisUrl, {
     maxRetriesPerRequest: null,
   });
+
+  client.on('error', (err) => {
+    console.warn(`Redis connection error: ${err.message}`);
+  });
+
+  return client;
 };
 
 export const redisConnection: any = createRedisClient();
