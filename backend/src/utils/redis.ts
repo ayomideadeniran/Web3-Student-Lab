@@ -5,16 +5,33 @@ import { Redis } from 'ioredis';
 
 const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
 
-export const redisConnection = new Redis(redisUrl, {
-  maxRetriesPerRequest: null,
-});
+const createTestRedisClient = (): Redis =>
+  ({
+    del: async () => 0,
+    disconnect: () => undefined,
+    duplicate: () => createTestRedisClient(),
+    get: async () => null,
+    on: () => createTestRedisClient(),
+    publish: async () => 0,
+    quit: async () => 'OK',
+    setex: async () => 'OK',
+    subscribe: async () => 0,
+  } as unknown as Redis);
 
-export const pubClient = new Redis(redisUrl, {
-  maxRetriesPerRequest: null,
-});
+const createRedisClient = (): Redis => {
+  if (process.env.NODE_ENV === 'test') {
+    return createTestRedisClient();
+  }
 
-export const subClient = new Redis(redisUrl, {
-  maxRetriesPerRequest: null,
-});
+  return new Redis(redisUrl, {
+    maxRetriesPerRequest: null,
+  });
+};
+
+export const redisConnection = createRedisClient();
+
+export const pubClient = createRedisClient();
+
+export const subClient = createRedisClient();
 
 export default redisConnection;

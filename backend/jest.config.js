@@ -1,4 +1,6 @@
 /** @type {import('ts-jest').JestConfigWithTsJest} */
+process.env.NODE_ENV = 'test';
+
 export default {
   setupFiles: ['dotenv/config', '<rootDir>/jest.setup.js'],
   preset: 'ts-jest',
@@ -7,6 +9,7 @@ export default {
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
   },
+  setupFiles: ['<rootDir>/tests/jest.setup.ts'],
   transform: {
     '^.+\\.tsx?$': [
       'ts-jest',

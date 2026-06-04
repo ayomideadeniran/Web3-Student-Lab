@@ -33,6 +33,7 @@ router.use('/notifications', notificationRouter);
 router.use('/security', securityRouter);
 router.use('/generator', generatorRouter);
 router.use('/export', exportRouter);
+router.use('/storage', storageRouter);
 router.use('/user', userRouter);
 router.use('/metrics', metricsRouter);
 
