@@ -1,12 +1,12 @@
 import { Router } from 'express';
-import { certificateController } from '../certificates/index';
-import { validate } from '../middleware/validation';
+import { certificateController } from '../certificates/index.js';
+import { validate } from '../middleware/validation.js';
 import {
   MintCertificateSchema,
   RevokeCertificateSchema,
   ReissueCertificateSchema,
   BatchVerificationSchema,
-} from './certificates/validation.schemas';
+} from './certificates/validation.schemas.js';
 
 const router = Router();
 
