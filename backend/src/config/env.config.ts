@@ -55,6 +55,19 @@ export const config = {
   openai: {
     apiKey: process.env.OPENAI_API_KEY || '',
   },
+  rateLimiting: {
+    enabled: process.env.RATE_LIMIT_ENABLED !== 'false',
+    defaultBurstMax: parseInt(getEnvVar('RATE_LIMIT_BURST_MAX', '20'), 10),
+    defaultBurstWindowMs: parseInt(getEnvVar('RATE_LIMIT_BURST_WINDOW_MS', '1000'), 10),
+    defaultSustainedMax: parseInt(getEnvVar('RATE_LIMIT_SUSTAINED_MAX', '200'), 10),
+    defaultSustainedWindowMs: parseInt(getEnvVar('RATE_LIMIT_SUSTAINED_WINDOW_MS', '60000'), 10),
+    authBurstMax: parseInt(getEnvVar('RATE_LIMIT_AUTH_BURST_MAX', '80'), 10),
+    authSustainedMax: parseInt(getEnvVar('RATE_LIMIT_AUTH_SUSTAINED_MAX', '600'), 10),
+    adminBurstMax: parseInt(getEnvVar('RATE_LIMIT_ADMIN_BURST_MAX', '200'), 10),
+    adminSustainedMax: parseInt(getEnvVar('RATE_LIMIT_ADMIN_SUSTAINED_MAX', '2000'), 10),
+    loginBurstMax: parseInt(getEnvVar('RATE_LIMIT_LOGIN_BURST_MAX', '5'), 10),
+    registerBurstMax: parseInt(getEnvVar('RATE_LIMIT_REGISTER_BURST_MAX', '3'), 10),
+  },
   
   /**
    * Helper to safely log configuration without exposing secrets

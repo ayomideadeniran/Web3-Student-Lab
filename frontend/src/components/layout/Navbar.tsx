@@ -1,6 +1,6 @@
 'use client';
 
-import { useKeyboardShortcuts } from '@/components/keyboard/KeyboardShortcutsProvider';
+import { LanguageSelector } from '@/components/common/LanguageSelector';
 import NotificationBell from '@/components/notifications/NotificationBell';
 import { useAuth } from '@/contexts/AuthContext';
 import { useWallet } from '@/contexts/WalletContext';
@@ -56,16 +56,7 @@ export default function Navbar() {
         </nav>
 
         <div className="hidden items-center gap-3 lg:flex">
-          <button
-            type="button"
-            onClick={openShortcutHelp}
-            className="rounded-full border border-white/12 px-4 py-2 text-sm font-medium text-[var(--text-strong)] transition hover:border-[var(--brand)] hover:bg-white/5"
-          >
-            <span className="inline-flex items-center gap-2">
-              <Keyboard className="h-4 w-4" />
-              Shortcuts
-            </span>
-          </button>
+          <LanguageSelector />
           {user ? (
             <>
               <NotificationBell />
@@ -135,6 +126,9 @@ export default function Navbar() {
               </Link>
             ))}
 
+            <div className="mt-4">
+              <LanguageSelector />
+            </div>
             <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
               {user ? (
                 <>
