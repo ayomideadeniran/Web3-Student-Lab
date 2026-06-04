@@ -217,3 +217,62 @@ model Canvas {
   @@index([studentId])
   @@index([createdAt])
 }
+
+// Cross-Chain Bridge Event Indexer Models
+
+/// Represents a processed block on a blockchain (STELLAR or EVM)
+model ProcessedBlock {
+  id            String   @id @default(cuid())
+  chain         String   // "STELLAR" or "EVM"
+  blockNumber   Int
+  blockHash     String   @unique
+  parentHash    String
+  timestamp     DateTime @default(now())
+  processedAt   DateTime @default(now())
+  isRolledBack  Boolean  @default(false)
+  rolledBackAt  DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  bridgeEvents BridgeEvent[]
+
+  @@unique([chain, blockNumber])
+  @@map("processed_blocks")
+  @@index([chain, blockNumber])
+  @@index([chain, blockHash])
+  @@index([chain, processedAt])
+  @@index([isRolledBack])
+}
+
+/// Represents a bridge event sourced from a block
+model BridgeEvent {
+  id                  String   @id @default(cuid())
+  chain               String   // "STELLAR" or "EVM"
+  blockNumber         Int
+  blockHash           String
+  processedBlockId    String
+  eventId             String   // Unique identifier for idempotent processing
+  eventType           String   // Type of bridge event
+  sourceChain         String   // Origin chain
+  targetChain         String   // Destination chain
+  data                Json     // Event payload
+  transactionHash     String?
+  logIndex            Int?
+  processed           Boolean  @default(false)
+  processedAt         DateTime?
+  processingError     String?
+  retryCount          Int      @default(0)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  processedBlock      ProcessedBlock @relation(fields: [processedBlockId], references: [id], onDelete: Cascade)
+
+  @@unique([chain, eventId]) // Ensures idempotent processing: one event per chain per eventId
+  @@map("bridge_events")
+  @@index([chain, blockNumber])
+  @@index([chain, eventId])
+  @@index([chain, processed])
+  @@index([sourceChain, targetChain])
+  @@index([processedAt])
+  @@index([retryCount])
+}
