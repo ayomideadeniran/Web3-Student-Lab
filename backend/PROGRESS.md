@@ -17,6 +17,13 @@ This document serves as a tracking log for the recent infrastructure improvement
 - **Onboarding API Mocking**: The frontend `Web3OnboardingProvider` was heavily crashing due to constant `404 Not Found` API calls. We temporarily unblocked the client by implementing mock `GET` and `PUT` endpoints for `/api/v1/user/onboarding` directly into `src/user/routes.ts`.
 - **Health Checks**: Standardized the `api/v1` routes to successfully respond to the frontend `ResiliencyBanner` without circuit-breaking.
 
+### 4. Render Deployment & Infrastructure Stabilization
+- **Database Synchronization (P3019 Fix)**: Removed the problematic `npx prisma migrate deploy` command from the container lifecycle and `start:prod` script. Replaced it with `npx prisma db push --accept-data-loss` in the `Dockerfile` to successfully bypass stale SQLite migration histories and directly sync the production PostgreSQL database.
+- **Prisma Configuration Alignment**: Adjusted the `Dockerfile` to explicitly copy `prisma.config.ts`, ensuring compatibility with Prisma v7.8.0 and preventing missing database URL errors during container initialization.
+- **Redis Connection Resolution**: Modified `src/cache/RedisClient.ts` and `src/config/redis.config.ts` to actively consume Render's internal `REDIS_URL` connection string, resolving persistent `ECONNREFUSED` errors attempting to connect to `localhost`.
+- **Decentralized Storage Graceful Fallback**: Updated the `StorageProvider` factory to automatically fall back to the `MockStorageProvider` when `PINATA_JWT` is omitted from production environment variables. This prevents 500 Server Errors during the certificate minting flow when no IPFS keys are supplied.
+- **RSA Payload Size Optimization**: Bypassed registration `OperationError` failures by upgrading the backend's RSA key modulus size in `securityService.ts` from 2048 to 4096 bits to accommodate large Web3 frontend encrypted payloads.
+
 ## ⏭️ Next Steps
 1. **Persistent Onboarding Data**: Replace the currently mocked `/user/onboarding` endpoint with direct Prisma reads/writes to persist user preferences in the PostgreSQL database.
 2. **Soroban Integration**: Begin integrating Soroban RPC libraries directly into the backend service endpoints to monitor the execution of the recently deployed Testnet contracts (such as `payment_scheduler` and `quadratic_funding`).
