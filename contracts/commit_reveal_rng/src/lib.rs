@@ -161,7 +161,7 @@ impl CommitRevealRng {
             .expect("participant did not commit");
 
         // Verify commitment: sha256(secret) must equal the stored hash.
-        let hash = env.crypto().sha256(&secret);
+        let hash: BytesN<32> = env.crypto().sha256(&secret).into();
         assert!(hash == commitment, "secret does not match commitment");
 
         let mut reveals: Map<Address, bool> = env.storage().instance().get(&REVEALS_KEY).unwrap();
@@ -226,7 +226,7 @@ impl CommitRevealRng {
 
         let entropy: BytesN<32> = env.storage().instance().get(&ENTROPY_KEY).unwrap();
         // Final hash: sha256(accumulated_entropy) for additional mixing.
-        let result = env.crypto().sha256(&entropy.into());
+        let result: BytesN<32> = env.crypto().sha256(&entropy.into()).into();
         env.storage().instance().set(&RESULT_KEY, &result);
         env.storage().instance().set(&PHASE_KEY, &Phase::Finalised);
 
@@ -302,7 +302,7 @@ mod tests {
 
     fn make_commitment(env: &Env, secret: &[u8]) -> (Bytes, BytesN<32>) {
         let secret_bytes = Bytes::from_slice(env, secret);
-        let hash = env.crypto().sha256(&secret_bytes);
+        let hash: BytesN<32> = env.crypto().sha256(&secret_bytes).into();
         (secret_bytes, hash)
     }
 

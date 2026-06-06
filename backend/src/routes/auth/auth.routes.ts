@@ -185,7 +185,7 @@ router.get(
       }
 
       // Validate wallet address format
-      if (!/^0x[a-fA-F0-9]{40}$/.test(walletAddress)) {
+      if (!/^G[A-Z2-7]{55}$/.test(walletAddress)) {
         res.status(400).json({ error: 'Invalid wallet address format' });
         return;
       }

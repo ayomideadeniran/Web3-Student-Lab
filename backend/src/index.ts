@@ -1,4 +1,5 @@
 // @ts-nocheck
+import config from './config/env.config.js';
 import cors from 'cors';
 import express, { Request, Response } from 'express';
 import { createServer } from 'http';
@@ -11,7 +12,6 @@ import cacheWarmer from './cache/CacheWarmer.js';
 import distributedCacheManager from './cache/DistributedCacheManager.js';
 import redisClient from './cache/RedisClient.js';
 import { rpcCacheHeadersMiddleware, rpcCacheMiddleware } from './cache/RPCInterceptor.js';
-import config from './config/env.config.js';
 import { swaggerSpec } from './config/swagger.js';
 import prisma from './db/index.js';
 import { dbRoutingMiddleware } from './middleware/dbRouting.js';
@@ -26,8 +26,6 @@ import { validateEnvironment } from './utils/checkEnv.js';
 import logger from './utils/logger.js';
 import { pubClient, redisConnection, subClient } from './utils/redis.js';
 import swaggerUi from 'swagger-ui-express';
-import { swaggerSpec } from './config/swagger.js';
-import config from './config/env.config.js';
 import { setRateLimitEnvOverrides } from './config/rateLimit.config.js';
 import { initializeWebSocket } from './websocket/WebSocketServer.js';
 

@@ -174,7 +174,7 @@ impl PaymentSchedulerContract {
     ///
     /// # Errors
     /// Returns `PaymentSchedulerError::AlreadyInitialized` if already initialized
-    pub fn init(env: Env, admin: Address) {
+    pub fn init_scheduler(env: Env, admin: Address) {
         if env.storage().persistent().has(&PaymentSchedulerKey::Admin) {
             panic_with_error!(&env, PaymentSchedulerError::NotInitialized);
         }
@@ -529,7 +529,7 @@ mod tests {
         let client = PaymentSchedulerContractClient::new(&env, &contract_id);
 
         let admin = Address::generate(&env);
-        client.init(&admin);
+        client.init_scheduler(&admin);
 
         (env, admin, client)
     }
