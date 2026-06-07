@@ -37,7 +37,9 @@ The application is fully deployed and accessible online:
 - Tailwind CSS
 - Monaco Editor
 
+
 **Backend**
+
 
 - Node.js / Express
 - PostgreSQL
